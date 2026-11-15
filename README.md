@@ -148,3 +148,15 @@ The supplied horse logo is the shared header/sign-in/favicon mark. Asset URLs in
 ### Live AI connection
 
 Production `https://trojanpath.vercel.app` is explicitly allowed by the Edge Functions' CORS policy, alongside the local development and GitHub Pages origins. Additional origins can be added through `ALLOWED_ORIGINS`. Live generation uses Gemini; errors remain retryable and no longer silently become starter plans. Weekly Plan offers **Generate with Gemini** for untouched starter plans; plans with progress or reflection are preserved. New visitors start in dark mode; the theme toggle remembers a student's explicit light/dark choice.
+
+### Recording the two demo journeys
+
+Choose **Try demo → Start Zahi’s journey → Fill with Zahi’s example**, then walk through the editable questions and select **Build my path**. The first example plan has economics-data exploration, introductory ML, and the existing USC Career Center resource, totaling 150 minutes within four hours.
+
+Choose **Try demo → See Zahi after 4 weeks** to open Profile with the adaptation card. Use **View supporting check-ins**, **Weekly Plan → Week** to compare the oldest and current plans, then **Profile → Projects** and **Portfolio** for the completed sample project and its pending résumé suggestion. The demo-only **New student / After 4 weeks / Reset this demo** controls switch isolated browser saves. Reset clears only the selected journey. Dates are seeded relative to the current week; existing saves retain their recorded dates until reset. No sign-in or Gemini request is made by either journey. New-student drafts preserve answers on refresh and return to question one.
+
+### Happening Now
+
+Adapted from teammate branch [`engage-events`, commit `2422d97`](https://github.com/zahitisani3-rgb/ncojoc/tree/engage-events). The existing Vite MVP keeps its authentication, Resources page, and XP rules. `shared/campus-events.ts` adapts the teammate's calendar normalization and matching; `Happening Now` adds event discovery, search, saved Going intentions, and self-reported attendance reflections that appear in Portfolio. Future attendance is disabled; Going does not register the student or award XP. No event-specific XP system was imported.
+
+The public, read-only Supabase `campus-events` function fetches the official USC calendar, caches each runtime's feed for an hour, and serves a labeled saved snapshot if the calendar is unavailable. Profiles are matched locally; profile text is not sent to the calendar. Demo mode always uses the deterministic labeled snapshot without fetching the service. The snapshot is dated November 15, 2026; official event pages remain authoritative for schedules and registration. Publish the Edge Function with its shared dependencies when deploying a fresh backend; it is already deployed to the configured TrojanPath project.

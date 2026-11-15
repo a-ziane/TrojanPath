@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import {
   BookOpen,
+  CalendarDays,
   CheckCheck,
   CheckSquare,
   Compass,
@@ -23,6 +24,7 @@ const links = [
   { url: "/leaderboard", label: "Ranks", icon: Trophy },
   { url: "/profile", label: "Profile", icon: UserRound },
   { url: "/opportunities", label: "Opportunities", icon: Compass },
+  { url: "/happening-now", label: "Happening Now", icon: CalendarDays },
   { url: "/resources", label: "Resources", icon: BookOpen },
 ];
 export function AppShell({
@@ -116,7 +118,7 @@ export function AppShell({
           )}
         </div>
         <div className="ref-session">
-          <span>{mode === "demo" ? "Demo · sample data" : "Live account"}</span>
+          <span>{mode === "demo" ? "Demo — sample data" : "Live account"}</span>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button onClick={onLogout}>
               <LogOut size={14} />

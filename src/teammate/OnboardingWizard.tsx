@@ -74,18 +74,33 @@ export function OnboardingWizard({
   mode,
   busy,
   onSave,
+  example,
+  initialProjects = [],
+  onDraftChange,
 }: {
   initial: Profile;
+  initialProjects?: Project[];
+  onDraftChange?: (profile: Profile, projects: Project[]) => void;
+  example?: { profile: Profile; projects: Project[] };
   mode: "demo" | "live";
   busy: boolean;
   onSave: (p: Profile, projects?: Project[]) => void;
 }) {
   const [p, setP] = useState(initial),
-    [projects, setProjects] = useState<Project[]>([]),
+    [projects, setProjects] = useState<Project[]>(initialProjects),
     [stepId, setStepId] = useState("name"),
     [error, setError] = useState(""),
     [uploading, setUploading] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    try {
+      onDraftChange?.(p, projects);
+    } catch {
+      setError(
+        "Could not save your demo draft. Browser storage may be full; reset this demo to start again.",
+      );
+    }
+  }, [p, projects, onDraftChange]);
   const update = <K extends keyof Profile>(key: K, value: Profile[K]) =>
     setP((p) => ({ ...p, [key]: value }));
   const steps: Step[] = [
@@ -190,6 +205,19 @@ export function OnboardingWizard({
       >
         <span style={{ width: `${((index + 1) / steps.length) * 100}%` }} />
       </div>
+      {example && (
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => {
+            setP(example.profile);
+            setProjects(example.projects);
+            setError("");
+          }}
+        >
+          Fill with Zahi’s example
+        </button>
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();

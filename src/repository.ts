@@ -1,9 +1,12 @@
 import { planningError } from "./planningErrors";
-import { withDemoHackSC } from "../shared/demoTasks";
+import {
+  loadJourney,
+  persistJourney,
+  selectJourney,
+  selectedDemo,
+} from "./demoJourneys";
 import { supabase } from "./supabase";
 import {
-  emptyState,
-  appStateSchema,
   profileSchema,
   type AppState,
   type Profile,
@@ -13,42 +16,26 @@ import {
   type Plan,
   type XPEvent,
 } from "../shared/domain";
-const KEY = "trojanpath:demo:v1";
 export function loadDemo(): AppState {
-  const raw = localStorage.getItem(KEY);
-  if (!raw) return emptyState();
   try {
-    const state = appStateSchema.parse(JSON.parse(raw));
-    const latest = [...state.plans].sort((a, b) =>
-      b.week.localeCompare(a.week),
-    )[0];
-    if (latest) {
-      const upgraded = withDemoHackSC(latest, state);
-      if (upgraded !== latest) {
-        state.plans = state.plans.map((p) =>
-          p.id === latest.id ? upgraded : p,
-        );
-        persistDemo(state);
-      }
-    }
-    return state;
+    return loadJourney().state;
   } catch {
     throw new Error(
       "The saved demo could not be read. Use Reset demo to start again.",
     );
   }
 }
-export function persistDemo(s: AppState) {
+export function persistDemo(state: AppState) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    persistJourney(state);
   } catch {
     throw new Error(
-      "Browser storage is full. Remove a large attachment or use a smaller file. Your latest change was not saved.",
+      "Browser storage is full. Remove a large attachment or reset this demo. Your latest change was not saved.",
     );
   }
 }
 export const resetDemo = () => {
-  localStorage.removeItem(KEY);
+  selectJourney(selectedDemo(), true);
   location.reload();
 };
 function client() {

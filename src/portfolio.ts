@@ -36,7 +36,23 @@ export function completedActivities(state: AppState): PortfolioActivity[] {
       evidence: t.reflection,
       skills: [],
     }));
-  return [...new Map([...projects, ...tasks].map((a) => [a.id, a])).values()];
+  const events: PortfolioActivity[] = Object.entries(
+    state.profile?.campusEvents || {},
+  )
+    .filter(([, e]) => e.attended)
+    .map(([id, e]) => ({
+      id: `event:${id}`,
+      kind: "event",
+      title: `Attend ${e.title}`,
+      evidence: e.note,
+      url: e.url,
+      skills: [],
+    }));
+  return [
+    ...new Map(
+      [...projects, ...events, ...tasks].map((a) => [a.id, a]),
+    ).values(),
+  ];
 }
 function pastTitle(title: string) {
   const verbs: Record<string, string> = {

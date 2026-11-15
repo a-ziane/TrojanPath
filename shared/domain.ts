@@ -46,6 +46,26 @@ export const profileSchema = z.object({
   displayName: z.string().max(40),
   resumePath: text.optional(),
   resumeDraft: text.optional(),
+  campusEvents: z
+    .record(
+      z.string().max(100),
+      z.object({
+        title: z.string().max(500),
+        url: z
+          .string()
+          .url()
+          .max(1000)
+          .refine(
+            (value) => value.startsWith("https://calendar.usc.edu/"),
+            "Use the official USC calendar event link.",
+          ),
+        startsOn: z.string().nullable(),
+        going: z.boolean(),
+        attended: z.boolean(),
+        note: z.string().max(1500),
+      }),
+    )
+    .optional(),
   portfolioReview: z
     .record(
       z.string().max(150),

@@ -1,3 +1,15 @@
+import { HappeningNow } from "./teammate/HappeningNow";
+import {
+  exampleProject,
+  firstDemoPlan,
+  loadJourney,
+  selectJourney,
+  selectedDemo,
+  saveDemoDraft,
+  zahiExample,
+  type DemoJourney,
+  type DemoAdaptation,
+} from "./demoJourneys";
 import { profileSummary } from "./profileSummary";
 import { downloadResumePDF } from "./resumePdf";
 import { GraduationField } from "./teammate/GraduationField";
@@ -661,6 +673,9 @@ export default function App() {
     [authMode, setAuthMode] = useState<"login" | "signup">("login"),
     [authEmail, setAuthEmail] = useState(""),
     [authPassword, setAuthPassword] = useState("");
+  const [demoJourney, setDemoJourney] = useState<DemoJourney>(selectedDemo);
+  const [demoChoice, setDemoChoice] = useState(false);
+  const [demoVersion, setDemoVersion] = useState(0);
   const navigate = useNavigate();
   useEffect(() => {
     let active = true;
@@ -738,12 +753,19 @@ export default function App() {
   async function refresh() {
     setState(await repo.loadLive());
   }
-  function startDemo() {
+  function startDemo(journey: DemoJourney, reset = false) {
     void run(async () => {
-      setState(repo.loadDemo());
+      const snapshot = selectJourney(journey, reset);
+      setState(snapshot.state);
+      setDemoJourney(journey);
+      setDemoVersion((v) => v + 1);
       setMode("demo");
+      setDemoChoice(false);
+      setModal(null);
+      setError("");
+      setNotice("");
       localStorage.setItem("trojanpath:mode", "demo");
-      navigate("/progress");
+      navigate(journey === "four-weeks" ? "/profile" : "/progress");
     });
   }
   async function saveProfile(p: Profile, projects: Project[] = []) {
@@ -754,7 +776,7 @@ export default function App() {
         if (!next.plans.length)
           next = {
             ...next,
-            plans: [makePlan(p, next, weekKey(new Date(), p.timezone))],
+            plans: [firstDemoPlan(p, weekKey(new Date(), p.timezone))],
           };
         commit(next);
       } else {
@@ -820,7 +842,7 @@ export default function App() {
   return (
     <>
       <ScrollReset />
-      {mode && <Celebration xp={xp} />}
+      {mode === "live" && <Celebration xp={xp} />}
       {!mode ? (
         <main className="welcome">
           <div className="welcome-art tp-welcome-art">
@@ -872,9 +894,33 @@ export default function App() {
               Find your direction, build your skills, and make your next move.
               One manageable week at a time.
             </p>
-            <button className="secondary large" onClick={startDemo}>
+            <button
+              className="secondary large"
+              onClick={() => setDemoChoice(!demoChoice)}
+            >
               Try demo <ArrowRight size={18} />
             </button>
+            {demoChoice && (
+              <div className="demo-entry-options">
+                <strong>Demo — sample data</strong>
+                <button
+                  className="secondary"
+                  onClick={() => startDemo("new", true)}
+                >
+                  Start Zahi’s journey
+                </button>
+                <button
+                  className="secondary"
+                  onClick={() => startDemo("four-weeks")}
+                >
+                  See Zahi after 4 weeks
+                </button>
+                <small>
+                  Illustrative journeys, not actual student results.
+                </small>
+              </div>
+            )}
+
             <small className="center">
               No account needed · Sample student · Saved in this browser
             </small>
@@ -983,11 +1029,50 @@ export default function App() {
             })
           }
         >
+          {mode === "demo" && (
+            <div className="demo-journey-switcher">
+              <strong>Demo — sample data</strong>
+              <button
+                aria-pressed={demoJourney === "new"}
+                onClick={() => startDemo("new")}
+              >
+                New student
+              </button>
+              <button
+                aria-pressed={demoJourney === "four-weeks"}
+                onClick={() => startDemo("four-weeks")}
+              >
+                After 4 weeks
+              </button>
+              <button onClick={() => startDemo(demoJourney, true)}>
+                Reset this demo
+              </button>
+            </div>
+          )}
           {!profile ? (
             <OnboardingWizard
+              key={`${demoJourney}:${demoVersion}`}
+              initialProjects={
+                mode === "demo" ? loadJourney().draft?.projects : undefined
+              }
+              onDraftChange={mode === "demo" ? saveDemoDraft : undefined}
+              example={
+                mode === "demo"
+                  ? { profile: zahiExample, projects: [exampleProject()] }
+                  : undefined
+              }
               initial={
                 mode === "demo"
-                  ? demoProfile
+                  ? loadJourney().draft?.profile || {
+                      ...zahiExample,
+                      name: "",
+                      major: "",
+                      standing: "",
+                      graduation: "",
+                      interests: [],
+                      skills: [],
+                      goal: "",
+                    }
                   : {
                       ...demoProfile,
                       name: "",
@@ -1067,6 +1152,11 @@ export default function App() {
                 path="/profile"
                 element={
                   <ProfilePage
+                    adaptations={
+                      mode === "demo" && demoJourney === "four-weeks"
+                        ? loadJourney().adaptations
+                        : []
+                    }
                     profile={profile}
                     state={state}
                     onEdit={() => setModal("profile")}
@@ -1140,6 +1230,24 @@ export default function App() {
               <Route
                 path="/resume"
                 element={<Navigate to="/portfolio" replace />}
+              />
+              <Route
+                path="/happening-now"
+                element={
+                  <HappeningNow
+                    profile={profile}
+                    mode={mode}
+                    onSave={async (next) => {
+                      const validated = profileSchema.parse(next);
+                      if (mode === "demo")
+                        commit({ ...state, profile: validated });
+                      else {
+                        await repo.liveProfile(validated);
+                        await refresh();
+                      }
+                    }}
+                  />
+                }
               />
               <Route path="/resources" element={<Resources />} />
               <Route path="*" element={<Navigate to="/progress" replace />} />
@@ -1372,6 +1480,11 @@ function WeeklyPlan({
                 Generate with Gemini
               </PathButton>
             </div>
+          )}
+          {selected.source === "demo" && (
+            <p className="text-xs text-muted">
+              Example plan — sample data, no live AI request.
+            </p>
           )}
           <TaskTracker
             tasks={selected.tasks}
@@ -1706,6 +1819,7 @@ function CheckinForm({
   );
 }
 function ProfilePage({
+  adaptations = [],
   profile: p,
   state,
   onEdit,
@@ -1719,6 +1833,7 @@ function ProfilePage({
   onProject: (p?: Project) => void;
   onResume: () => void;
   onPost: (p: Project) => void;
+  adaptations?: DemoAdaptation[];
 }) {
   const [fileError, setFileError] = useState("");
   const [downloadingSummary, setDownloadingSummary] = useState(false);
@@ -1790,6 +1905,28 @@ function ProfilePage({
           </PathButton>
         </div>
       </section>
+      {adaptations.length > 0 && (
+        <section className="demo-adaptation-card">
+          <h2>How your plan has adapted</h2>
+          <p>Based on your weekly check-ins and completed activities.</p>
+          <div className="demo-adaptation-grid">
+            {adaptations.map((record) => (
+              <div key={record.label}>
+                <h3>{record.label}</h3>
+                <p>
+                  <span>{record.before}</span> → <strong>{record.after}</strong>
+                </p>
+                <small>Why: {record.why}</small>
+              </div>
+            ))}
+          </div>
+          <p>
+            These are suggestions you can change. This history is illustrative
+            sample data.
+          </p>
+          <NavLink to="/checkins">View supporting check-ins →</NavLink>
+        </section>
+      )}
       <div className="profile-info-grid">
         <section className="profile-info-card">
           <h2>
