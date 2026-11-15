@@ -1250,7 +1250,19 @@ export default function App() {
                 }
               />
               <Route path="/resources" element={<Resources />} />
-              <Route path="*" element={<Navigate to="/progress" replace />} />
+              <Route
+                path="*"
+                element={
+                  <Navigate
+                    to={
+                      mode === "demo" && demoJourney === "four-weeks"
+                        ? "/profile"
+                        : "/progress"
+                    }
+                    replace
+                  />
+                }
+              />
             </Routes>
           )}
           <footer>
