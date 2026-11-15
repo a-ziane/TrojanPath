@@ -19,7 +19,12 @@ export const profileSchema = z.object({
   minor: text.default(""),
   degree: z.enum(["Undergraduate", "Master’s", "PhD"]),
   standing: text,
-  graduation: z.string().regex(/^\d{4}-\d{2}$/),
+  graduation: z
+    .string()
+    .regex(
+      /^\d{4}-(0[1-9]|1[0-2])$/,
+      "Choose your graduation month and enter a four-digit year.",
+    ),
   interests: z.array(z.string().max(80)).max(20),
   skills: z.array(z.string().max(80)).max(30),
   skillContext: z.record(z.string().max(80), z.string().max(1000)).optional(),

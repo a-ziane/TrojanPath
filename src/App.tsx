@@ -1,3 +1,4 @@
+import { GraduationField } from "./teammate/GraduationField";
 import { PortfolioPage } from "./teammate/PortfolioPage";
 import { BrandMark } from "./BrandMark";
 import { TrojanGuide } from "./teammate/TrojanGuide";
@@ -367,11 +368,9 @@ function ProfileForm({
         </label>
         <label>
           Expected graduation
-          <input
-            type="month"
-            required
+          <GraduationField
             value={p.graduation}
-            onChange={(e) => update("graduation", e.target.value)}
+            onChange={(value) => update("graduation", value)}
           />
         </label>
         <label>

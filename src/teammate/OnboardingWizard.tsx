@@ -1,3 +1,4 @@
+import { GraduationField } from "./GraduationField";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import {
@@ -122,6 +123,15 @@ export function OnboardingWizard({
   }, [stepId]);
   function next() {
     setError("");
+    const key = step.id === "background" ? "experiences" : step.id;
+    if (key in profileSchema.shape) {
+      const fieldKey = key as keyof typeof profileSchema.shape;
+      const result = profileSchema.shape[fieldKey].safeParse(p[fieldKey]);
+      if (!result.success) {
+        setError(result.error.issues[0].message);
+        return;
+      }
+    }
     if (step.id === "projects")
       for (const project of projects) {
         const result = projectSchema.safeParse(project);
@@ -133,7 +143,10 @@ export function OnboardingWizard({
     if (last) {
       const result = profileSchema.safeParse(p);
       if (!result.success) {
-        setError(result.error.issues[0].message);
+        const issue = result.error.issues[0];
+        const field = String(issue.path[0]);
+        if (steps.some((s) => s.id === field)) setStepId(field);
+        setError(issue.message);
         return;
       }
       onSave(result.data, projects);
@@ -207,12 +220,9 @@ export function OnboardingWizard({
           {step.id === "standing" &&
             field("standing", "e.g. Junior or Year 2", true)}
           {step.id === "graduation" && (
-            <input
-              aria-label={step.question}
-              type="month"
-              required
+            <GraduationField
               value={p.graduation}
-              onChange={(e) => update("graduation", e.target.value)}
+              onChange={(value) => update("graduation", value)}
             />
           )}
           {step.id === "background" && (

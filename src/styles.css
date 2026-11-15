@@ -6119,3 +6119,13 @@
     font-size: 13px;
   }
 }
+
+.graduation-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.graduation-fields > * {
+  min-width: 0;
+}
