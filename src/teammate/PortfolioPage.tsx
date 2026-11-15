@@ -16,6 +16,7 @@ import {
   resumeSuggestion,
   type PortfolioPatch,
 } from "../portfolio";
+import { formatResume } from "../resumeFormat";
 import { downloadResumePDF } from "../resumePdf";
 import { Button } from "./ui";
 
@@ -42,6 +43,8 @@ export function PortfolioPage({
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
     [showReviewed, setShowReviewed] = useState(false);
+  const [editingDocument, setEditingDocument] = useState(false);
+  const formatted = formatResume(text, profile.name);
   const paper = useRef<HTMLTextAreaElement>(null);
   const activity = activities.find((a) => a.id === selected) || activities[0];
   const draft = activity ? (posts[activity.id] ?? linkedInDraft(activity)) : "";
@@ -51,7 +54,7 @@ export function PortfolioPage({
       paper.current.style.height = "auto";
       paper.current.style.height = `${Math.max(880, paper.current.scrollHeight)}px`;
     }
-  }, [text]);
+  }, [text, editingDocument]);
   async function save(patch: Partial<PortfolioPatch>, success: string) {
     setBusy(true);
     setError("");
@@ -283,19 +286,49 @@ export function PortfolioPage({
                 Save
               </Button>
             </div>
+            <div className="resume-format-bar">
+              <span>Harvard-style · US Letter</span>
+              <button
+                type="button"
+                onClick={() => setEditingDocument(!editingDocument)}
+              >
+                {editingDocument ? "Preview résumé" : "Edit résumé"}
+              </button>
+            </div>
             <div className="tp-doc-ruler" aria-hidden="true">
               1 · · · · 2 · · · · 3 · · · · 4 · · · · 5 · · · · 6
             </div>
             <div className="tp-doc-canvas">
-              <textarea
-                ref={paper}
-                aria-label="Editable résumé document"
-                className="tp-doc-paper"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                maxLength={4000}
-                spellCheck
-              />
+              {editingDocument ? (
+                <textarea
+                  ref={paper}
+                  aria-label="Editable résumé document"
+                  className="tp-doc-paper"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  maxLength={4000}
+                  spellCheck
+                />
+              ) : (
+                <article
+                  className="harvard-resume"
+                  aria-label="Formatted résumé preview"
+                >
+                  <h1>{formatted.name}</h1>
+                  {formatted.blocks.map((block, index) =>
+                    block.kind === "heading" ? (
+                      <h2 key={index}>{block.text}</h2>
+                    ) : (
+                      <p key={index} className={`resume-${block.kind}`}>
+                        {block.kind === "bullet" && (
+                          <span aria-hidden="true">• </span>
+                        )}
+                        {block.text}
+                      </p>
+                    ),
+                  )}
+                </article>
+              )}
             </div>
             <div className="print-material">
               <pre>{text}</pre>
