@@ -241,7 +241,7 @@ export function OnboardingWizard({
                   checked={p.research}
                   onChange={(e) => update("research", e.target.checked)}
                 />
-                I’m interested in research or graduate school
+                <span>I’m interested in research or graduate school</span>
               </label>
             </>
           )}
