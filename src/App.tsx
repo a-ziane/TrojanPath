@@ -1,3 +1,6 @@
+import { Celebration } from "./teammate/Celebration";
+import { GameProgress } from "./teammate/GameProgress";
+import { Podium } from "./teammate/Podium";
 import { OnboardingWizard } from "./teammate/OnboardingWizard";
 import { TaskTracker } from "./teammate/TaskTracker";
 import { CheckinHistory } from "./teammate/CheckinHistory";
@@ -798,7 +801,7 @@ export default function App() {
         }
       },
       status === "completed"
-        ? `Quest complete! ${t.xp} XP awarded once.`
+        ? `Task complete! ${t.xp} XP awarded once.`
         : "Quest updated.",
     );
   }
@@ -826,6 +829,7 @@ export default function App() {
   return (
     <>
       <ScrollReset />
+      {mode && <Celebration xp={xp} />}
       {!mode ? (
         <main className="welcome">
           <div className="welcome-art tp-welcome-art">
@@ -1163,6 +1167,9 @@ export default function App() {
           role={error ? "alert" : "status"}
         >
           <span>{error || notice}</span>
+          {error.includes("saved demo") && (
+            <button onClick={repo.resetDemo}>Reset demo</button>
+          )}
           {error && (
             <button
               onClick={() => {
@@ -1328,31 +1335,19 @@ function WeeklyPlan({
   return (
     <div className="tp-simple-page">
       <PageHeader
-        eyebrow="Your quests"
-        title="This week"
+        eyebrow="Your week"
+        title="Weekly plan"
         actions={
           <PathButton variant="secondary" onClick={onCheckin}>
             Check in
           </PathButton>
         }
       />
-      <div className="tp-compact-stats">
-        <span>
-          {complete}/{selected?.tasks.length || 0} completed
-        </span>
-        <span>Level {Math.floor(xp / 100) + 1}</span>
-        <span>
-          {Number(
-            (
-              (selected?.tasks
-                .filter((t) => t.status !== "skipped")
-                .reduce((sum, t) => sum + t.minutes, 0) || 0) / 60
-            ).toFixed(1),
-          )}{" "}
-          hr planned
-        </span>
-        <span>{profile.hours} hr available</span>
-      </div>
+      <GameProgress
+        xp={xp}
+        completed={complete}
+        total={selected?.tasks.length || 0}
+      />
       {selected ? (
         <>
           <label className="tp-week-selector">
@@ -1634,7 +1629,7 @@ function CheckinForm({
             </label>
           ))
         ) : (
-          <p>No quests yet. You can still reflect on your week.</p>
+          <p>No tasks yet. You can still reflect on your week.</p>
         )}
         <small>
           This records your check-in; use Complete on a quest to confirm it and
@@ -1656,19 +1651,28 @@ function CheckinForm({
           onChange={(e) => setC({ ...c, disliked: e.target.value })}
         />
       </label>
-      <label>
-        How manageable was the workload?
-        <select
-          value={c.workload}
-          onChange={(e) =>
-            setC({ ...c, workload: e.target.value as Checkin["workload"] })
-          }
-        >
-          <option value="manageable">Just right</option>
-          <option value="too busy">Too busy — I had limited time</option>
-          <option value="ready for more">I have room for more</option>
-        </select>
-      </label>
+      <fieldset>
+        <legend>How was your workload?</legend>
+        <div className="ref-workload">
+          {(
+            [
+              { value: "too busy", label: "Too busy", symbol: "◷" },
+              { value: "manageable", label: "Just right", symbol: "☀" },
+              { value: "ready for more", label: "Want more", symbol: "↗" },
+            ] as const
+          ).map((option) => (
+            <button
+              type="button"
+              aria-pressed={c.workload === option.value}
+              key={option.value}
+              onClick={() => setC({ ...c, workload: option.value })}
+            >
+              <span aria-hidden="true">{option.symbol}</span>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </fieldset>
       <label>
         Any change in direction?
         <input
@@ -1952,7 +1956,7 @@ function Progress({ state, mode }: { state: AppState; mode: string }) {
             : "Opt-in students · Display names only"
         }
       />
-      <div className="tp-week-grid">
+      <div className="ref-ranks-layout">
         <PathCard>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-[22px] font-bold">
@@ -1961,26 +1965,10 @@ function Progress({ state, mode }: { state: AppState; mode: string }) {
             <PathChip tone="gold">{month}</PathChip>
           </div>
           {rows.length ? (
-            rows.map((r, i) => (
-              <div
-                key={r.name}
-                className="flex items-center gap-4 border-b border-border py-5"
-              >
-                <span
-                  className={`flex size-9 items-center justify-center rounded-full font-bold ${i === 0 ? "bg-gold text-ink" : "bg-bg text-muted"}`}
-                >
-                  {i + 1}
-                </span>
-                <strong className="flex-1 text-[15px]">{r.name}</strong>
-                <span className="text-[14px] font-semibold text-cardinal">
-                  {r.xp} XP
-                </span>
-              </div>
-            ))
+            <Podium rows={rows} />
           ) : (
             <p className="py-6 text-muted">
-              No participants yet. Opt in from your profile if you’d like to
-              join.
+              No participants yet. Opt in from your profile to join.
             </p>
           )}
           <p className="mt-5 text-[13px] text-muted">
@@ -2020,7 +2008,7 @@ function Progress({ state, mode }: { state: AppState; mode: string }) {
                   <span>
                     {e.key.startsWith("project:")
                       ? "Completed project"
-                      : "Completed quest"}
+                      : "Completed task"}
                   </span>
                   <strong className="text-success">+{e.amount}</strong>
                 </div>
@@ -2031,7 +2019,7 @@ function Progress({ state, mode }: { state: AppState; mode: string }) {
               </p>
             )}
             <p className="mt-4 text-[12px] text-muted">
-              Quests earn 10 XP per started 15 minutes. Completed projects earn
+              Tasks earn 10 XP per started 15 minutes. Completed projects earn
               100 XP once.
             </p>
           </PathCard>
@@ -2070,27 +2058,17 @@ function Opportunities({ state, mode }: { state: AppState; mode: string }) {
       <div className="page-heading">
         <div>
           <span className="eyebrow">OPEN A FEW NEW DOORS</span>
-          <h1>See where your strengths can take you.</h1>
-          <p>
-            Explore possibilities that connect with your interests and work.
-          </p>
+          <h1>Opportunities</h1>
+          <p>Matched to your skills and interests.</p>
         </div>
       </div>
-      <div className="info-banner">
-        <Compass size={21} />
-        <div>
-          <strong>
-            {mode === "demo"
-              ? "Sample opportunities · Demo mode"
-              : "Illustrative opportunities · Live feed not connected"}
-          </strong>
-          <p>
-            These examples are not live listings. No employer, opening,
-            deadline, or placement is implied. Find verified opportunities
-            through USC’s Career Center.
-          </p>
-        </div>
-      </div>
+      <details className="ref-opportunity-note">
+        <summary>Samples · not real listings</summary>
+        <p>
+          Illustrative matches based on your profile. Find verified openings
+          through the USC Career Center; eligibility varies.
+        </p>
+      </details>
       <label className="search-field">
         <Search size={19} />
         <input
@@ -2157,7 +2135,7 @@ function Resources() {
       <div className="page-heading">
         <div>
           <span className="eyebrow">YOU DON’T HAVE TO DO THIS ALONE</span>
-          <h1>A campus full of possibility.</h1>
+          <h1>Resources</h1>
           <p>
             Start with trusted USC resources, then take the next step that fits
             you.

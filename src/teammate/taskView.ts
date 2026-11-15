@@ -1,6 +1,7 @@
 import type { AppState, Checkin, Task } from "../../shared/domain";
-export type TaskFilter = "active" | "completed" | "skipped";
+export type TaskFilter = "all" | "active" | "completed" | "skipped";
 export function tasksForView(tasks: Task[], filter: TaskFilter) {
+  if (filter === "all") return tasks;
   return tasks.filter((t) =>
     filter === "active"
       ? t.status === "suggested" || t.status === "in progress"
@@ -24,7 +25,7 @@ export function weeklyRecap(state: AppState, checkin: Checkin) {
     completed,
     reported,
     text: completed.length
-      ? `You completed ${completed.length} ${completed.length === 1 ? "quest" : "quests"}${completed.length ? `: ${completed.map((t) => t.title).join("; ")}` : ""}.`
+      ? `You completed ${completed.length} ${completed.length === 1 ? "task" : "tasks"}${completed.length ? `: ${completed.map((t) => t.title).join("; ")}` : ""}.`
       : "You made time to reflect on your week.",
   };
 }

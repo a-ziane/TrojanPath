@@ -134,3 +134,5 @@ The original Next.js/Zustand demo was adapted to the existing Vite app, keeping 
 - `/resume` is a paper-style document editor with explicit Save, unsaved-change status, and PDF export through the browser’s print dialog.
 - The original vector Trojan guide, mountain scenery, milestone stars/flags, and compact XP meter provide the game styling without external graphics dependencies.
 - Deploy `skill-context` alongside `generate-plan` and `upload-file`; all keep the Gemini secret on the server. Skill questions share the existing per-user AI request limit. No database migration or additional API key is required.
+
+The latest screenshot-inspired design uses **Weekly Plan** and **Path**, a physical career ladder, earned badges, completion rings, ranking podiums, and mobile bottom navigation. Milestone floors reflect participation XP; they are not employment titles or promised promotions. The guide stays on the ladder instead of following an outdoor trail into the sky.

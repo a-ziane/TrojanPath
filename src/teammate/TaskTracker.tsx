@@ -11,22 +11,24 @@ export function TaskTracker({
   tasks,
   ...actions
 }: { tasks: Task[] } & TaskActions) {
-  const [filter, setFilter] = useState<TaskFilter>("active");
+  const [filter, setFilter] = useState<TaskFilter>("all");
   const visible = tasksForView(tasks, filter);
   return (
     <section className="tp-tracker">
       <div className="tp-task-tabs" role="group" aria-label="Filter tasks">
-        {(["active", "completed", "skipped"] as const).map((f) => (
+        {(["all", "active", "completed", "skipped"] as const).map((f) => (
           <button
             key={f}
             aria-pressed={filter === f}
             onClick={() => setFilter(f)}
           >
-            {f === "active"
-              ? "Active"
-              : f === "completed"
-                ? "Completed"
-                : "Skipped"}{" "}
+            {f === "all"
+              ? "All"
+              : f === "active"
+                ? "Active"
+                : f === "completed"
+                  ? "Completed"
+                  : "Skipped"}{" "}
             <span>{tasksForView(tasks, f).length}</span>
           </button>
         ))}
@@ -46,10 +48,10 @@ export function TaskTracker({
       {!visible.length && (
         <p className="tp-empty">
           {filter === "active"
-            ? "No active quests for this week."
+            ? "No active tasks for this week."
             : filter === "completed"
-              ? "No completed quests yet."
-              : "No skipped quests."}
+              ? "No completed tasks yet."
+              : "No skipped tasks."}
         </p>
       )}
     </section>

@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Clock3,
+  Rocket,
+  Wrench,
+  Compass,
+  Microscope,
+  Users,
+} from "lucide-react";
 import type { Task } from "../../shared/domain";
 import { resources } from "../../shared/resources";
 import { Button, cx } from "./ui";
@@ -30,31 +39,46 @@ export function TaskCard({
       )}
     >
       <div className="tp-task-line">
-        <div className="min-w-0 flex-1">
-          <h3>{t.title}</h3>
-          <span className="tp-task-meta">
-            {t.minutes / 60 >= 1
-              ? `${Number((t.minutes / 60).toFixed(1))} hr`
-              : `${t.minutes} min`}{" "}
-            · {t.xp} XP
-          </span>
-        </div>
         <button
-          className={cx("tp-complete", done && "is-complete")}
+          className={cx("ref-task-toggle", done && "done")}
+          aria-label={`Complete ${t.title}`}
           aria-pressed={done}
+          title="Complete"
           disabled={busy || t.status === "skipped"}
           onClick={() => onStatus(done ? "suggested" : "completed")}
         >
-          {done && <Check size={13} />}Complete
+          {done && <Check size={22} />}
+        </button>
+        <div className="min-w-0 flex-1">
+          <h3>{t.title}</h3>
+          <span className="tp-task-meta">
+            {
+              {
+                projects: "Project",
+                skills: "Skill",
+                exploration: "Explore",
+                research: "Research",
+                networking: "Connect",
+              }[t.category]
+            }{" "}
+            · <Clock3 size={12} />
+            {t.minutes} min
+          </span>
+        </div>
+        <span className="ref-task-xp">+{t.xp} XP</span>
+        <button
+          className="ref-task-expand"
+          aria-label={`Evidence & reflection: ${t.title}`}
+          aria-expanded={expanded}
+          title="Evidence & reflection"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <ChevronDown
+            size={17}
+            style={{ transform: expanded ? "rotate(180deg)" : undefined }}
+          />
         </button>
       </div>
-      <button
-        className="tp-detail-button"
-        aria-expanded={expanded}
-        onClick={() => setExpanded(!expanded)}
-      >
-        Evidence & reflection {expanded ? "−" : "+"}
-      </button>
       {expanded && (
         <div className="tp-task-details">
           <p>{t.instructions}</p>
@@ -74,7 +98,7 @@ export function TaskCard({
             ) : null;
           })}
           <label>
-            What did you do or learn?
+            Evidence & reflection
             <textarea
               value={reflection}
               onChange={(e) => setReflection(e.target.value)}

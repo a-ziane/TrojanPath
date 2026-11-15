@@ -41,8 +41,8 @@ export function CheckinHistory({
                 {recap.reported > 0 && (
                   <p className="text-muted">
                     {recap.reported} additional{" "}
-                    {recap.reported === 1 ? "quest was" : "quests were"}{" "}
-                    reported in this check-in.
+                    {recap.reported === 1 ? "task was" : "tasks were"} reported
+                    in this check-in.
                   </p>
                 )}
                 {[

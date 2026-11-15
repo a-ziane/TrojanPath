@@ -37,3 +37,11 @@ Remaining external steps: Configure Auth Site URL/redirect URLs and email delive
 - Guided onboarding browser: verified one question at a time, Back preserving a changed name, individual skill follow-ups, project title/link/description, résumé file attachment, editable 2.5-hour availability, successful saved pathway, and a plan within the selected budget. All browser test mutations used disposable local demo data.
 - Responsive dashboard: 390px viewport has no horizontal overflow. Original vector mascot and map graphics replace the initials avatar; motion respects reduced-motion preferences.
 - New profile and check-in fields remain inside existing owner-protected JSON data; no table grants, RLS policies, or database schema changed.
+
+## Screenshot-inspired UI and career ladder
+
+- Main navigation now uses Weekly Plan and Path, with icons, a player card, and mobile bottom navigation. The path graphic is a physical career ladder with floors and rungs; the guide loads directly on its earned milestone and moves vertically along the ladder. Outdoor scenery and the sky path are removed.
+- Completion ring, level bars, persistent crossed-out completed tasks, a reduced-motion-aware XP celebration, ranking podium, workload cards, and eight derived badges are implemented. Opportunity samples stay explicitly labeled.
+- Production build / TypeScript and all 17 tests pass. Achievement tests verify recorded awards and that duplicate check-in weeks cannot inflate a streak.
+- Browser verification: three completed demo tasks show 100 XP and Level 2; First Step is earned. The final preview at 150 XP renders the guide at the second floor (118px from the base), with no horizontal overflow in the observed 721px viewport. Prior saved demo progress and check-in status remain intact.
+- No backend, database, credentials, or API model changes in this update.
