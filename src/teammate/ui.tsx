@@ -14,7 +14,7 @@ const variantClass: Record<Variant, string> = {
     "bg-cardinal text-white hover:bg-cardinal-dark disabled:bg-cardinal/40",
   secondary:
     "bg-surface text-ink border-[1.5px] border-border hover:border-muted/40 disabled:text-muted",
-  gold: "bg-gold text-ink hover:brightness-95 disabled:opacity-50",
+  gold: "bg-gold text-on-gold hover:brightness-95 disabled:opacity-50",
   ghost: "text-muted hover:text-ink hover:bg-border/40",
 };
 
@@ -58,7 +58,7 @@ const toneClass: Record<ChipTone, string> = {
   blue: "bg-blue-soft text-blue",
   success: "bg-success-soft text-success",
   neutral: "bg-border text-muted",
-  goldSolid: "bg-gold text-ink",
+  goldSolid: "bg-gold text-on-gold",
   white: "bg-surface text-ink border border-border",
 };
 
@@ -194,7 +194,7 @@ export function Logo({
       <span
         className={cx(
           "flex size-9 items-center justify-center rounded-[10px] font-display text-[14px] font-bold",
-          light ? "bg-gold text-cardinal" : "bg-cardinal text-gold",
+          light ? "bg-gold text-[#990000]" : "bg-cardinal text-gold",
         )}
       >
         TP

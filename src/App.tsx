@@ -7,6 +7,7 @@ import { CheckinHistory } from "./teammate/CheckinHistory";
 import { SkillPrompt } from "./teammate/SkillPrompt";
 import { TaskCard as Quest } from "./teammate/TaskCard";
 import { AppShell } from "./teammate/AppShell";
+import { ThemeToggle } from "./teammate/ThemeToggle";
 import { PathwayPage } from "./teammate/PathwayPage";
 import {
   Button as PathButton,
@@ -834,7 +835,7 @@ export default function App() {
         <main className="welcome">
           <div className="welcome-art tp-welcome-art">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-[10px] bg-gold font-display text-[15px] font-bold text-cardinal">
+              <span className="flex size-10 items-center justify-center rounded-[10px] bg-gold font-display text-[15px] font-bold text-[#990000]">
                 TP
               </span>
               <strong className="font-display text-[23px] text-white">
@@ -875,6 +876,7 @@ export default function App() {
             </small>
           </div>
           <section className="welcome-form">
+            <ThemeToggle className="self-end justify-self-end" />
             <span className="eyebrow">WELCOME TO TROJANPATH</span>
             <h2>A future that feels like you.</h2>
             <p className="muted">

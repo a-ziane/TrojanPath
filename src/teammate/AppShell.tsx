@@ -16,6 +16,7 @@ import {
 import { streak, totalXP, weekKey, type AppState } from "../../shared/domain";
 import { Avatar, Logo } from "./ui";
 import { levelFor } from "./pathway";
+import { ThemeToggle } from "./ThemeToggle";
 const links = [
   { url: "/plan", label: "Weekly Plan", icon: CheckSquare },
   { url: "/progress", label: "Path", icon: Compass },
@@ -116,10 +117,13 @@ export function AppShell({
         </div>
         <div className="ref-session">
           <span>{mode === "demo" ? "Demo · sample data" : "Live account"}</span>
-          <button onClick={onLogout}>
-            <LogOut size={14} />
-            {mode === "demo" ? "Exit demo" : "Sign out"}
-          </button>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button onClick={onLogout}>
+              <LogOut size={14} />
+              {mode === "demo" ? "Exit demo" : "Sign out"}
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
       <div className="tp-workspace ref-workspace">

@@ -15,6 +15,22 @@
       rel="stylesheet"
     />
     <title>TrojanPath · Your next chapter</title>
+    <script>
+      // Apply the saved (or device) theme before first paint to avoid a flash.
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem("trojanpath:theme");
+        } catch (e) {}
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = t;
+        if (t === "dark") {
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", "#141111");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -20,7 +20,7 @@ export function GameProgress({
             cy="40"
             r="33"
             fill="none"
-            stroke="#eee8de"
+            style={{ stroke: "var(--tp-ring-track, #eee8de)" }}
             strokeWidth="8"
           />
           <circle
@@ -28,7 +28,7 @@ export function GameProgress({
             cy="40"
             r="33"
             fill="none"
-            stroke="#2e7d4f"
+            style={{ stroke: "var(--tp-ring-fill, #2e7d4f)" }}
             strokeWidth="8"
             strokeLinecap="round"
             strokeDasharray={`${pct * 207.35} 207.35`}
