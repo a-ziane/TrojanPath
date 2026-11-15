@@ -1,16 +1,17 @@
 import { createClient } from "@supabase/supabase-js";
 export function headers(req: Request) {
   const origin = req.headers.get("Origin") || "";
-  const allowed = (
-    Deno.env.get("ALLOWED_ORIGINS") ||
-    "http://localhost:5173,http://127.0.0.1:5173,https://a-ziane.github.io"
-  )
-    .split(",")
-    .map((s) => s.trim());
+  const allowed = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://a-ziane.github.io",
+    "https://trojanpath.vercel.app",
+    ...(Deno.env.get("ALLOWED_ORIGINS") || "").split(",").map((s) => s.trim()),
+  ];
   return {
     "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : "null",
     "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
+      "authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     Vary: "Origin",
     "Content-Type": "application/json",

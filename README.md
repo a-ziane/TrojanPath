@@ -144,3 +144,7 @@ The latest screenshot-inspired design uses **Weekly Plan** and **Path**, a physi
 The side panel drafts editable LinkedIn posts for completed activities. Edited drafts can be saved and copied; nothing is published automatically. Suggestions and posts are assembled from confirmed saved activity details, with no additional API calls or new credentials. Portfolio decisions and post drafts live in the existing owner-protected profile JSON.
 
 The supplied horse logo is the shared header/sign-in/favicon mark. Asset URLs include a cache version so the older TP mark is replaced on refresh.
+
+### Live AI connection
+
+Production `https://trojanpath.vercel.app` is explicitly allowed by the Edge Functions' CORS policy, alongside the local development and GitHub Pages origins. Additional origins can be added through `ALLOWED_ORIGINS`. Live generation uses Gemini; errors remain retryable and no longer silently become starter plans. Weekly Plan offers **Generate with Gemini** for untouched starter plans; plans with progress or reflection are preserved. New visitors start in dark mode; the theme toggle remembers a student's explicit light/dark choice.

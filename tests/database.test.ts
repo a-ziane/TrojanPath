@@ -18,6 +18,12 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    readFileSync(
+      "supabase/migrations/20261115092620_ai_starter_upgrade.sql",
+      "utf8",
+    ),
+  );
   await db.exec(readFileSync("supabase/seed.sql", "utf8"));
   await db.query("insert into auth.users(id) values($1),($2)", [a, b]);
   await db.exec("set role authenticated");
@@ -140,4 +146,45 @@ it("enforces atomic current-week check-ins and durable rate limits", async () =>
       [a, week, JSON.stringify(data)],
     ),
   ).rejects.toThrow();
+});
+
+it("upgrades only untouched starter plans atomically and preserves completed work", async () => {
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [b]);
+  await db.query("insert into public.profiles(user_id,data) values($1,$2)", [
+    b,
+    JSON.stringify(demoProfile),
+  ]);
+  const state = { ...emptyState(), profile: demoProfile };
+  const starter = makePlan(demoProfile, state, weekKey(new Date()), "fallback");
+  await db.query("select public.save_plan($1)", [JSON.stringify(starter)]);
+  const ai = {
+    ...makePlan(demoProfile, state, starter.week, "fallback"),
+    source: "gemini",
+  };
+  const invalid = {
+    ...ai,
+    tasks: ai.tasks.map((t) => ({ ...t, minutes: 240 })),
+  };
+  await expect(
+    db.query("select public.upgrade_starter_plan($1)", [
+      JSON.stringify(invalid),
+    ]),
+  ).rejects.toThrow();
+  expect(
+    (await db.query("select source from public.weekly_plans")).rows,
+  ).toEqual([{ source: "fallback" }]);
+  await db.query("select public.upgrade_starter_plan($1)", [
+    JSON.stringify(ai),
+  ]);
+  expect(
+    (await db.query("select source from public.weekly_plans")).rows,
+  ).toEqual([{ source: "gemini" }]);
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [a]);
+  await expect(
+    db.query("select public.upgrade_starter_plan($1)", [JSON.stringify(ai)]),
+  ).rejects.toThrow("plan has activity");
+  expect(
+    (await db.query("select id from public.tasks where status='completed'"))
+      .rows,
+  ).toHaveLength(1);
 });

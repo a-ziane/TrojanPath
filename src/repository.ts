@@ -149,7 +149,7 @@ export async function liveGenerate(
   replaceId?: string,
 ): Promise<void> {
   const { data, error } = await client().functions.invoke("generate-plan", {
-    body: { week, replaceId },
+    body: { week, replaceId, retryStarter: true },
     signal: AbortSignal.timeout(30000),
   });
   if (error)

@@ -759,32 +759,15 @@ export default function App() {
         await repo.liveProfile(p);
         for (const project of projects) await repo.liveProject(project);
         await refresh();
-        if (!state.plans.length) {
-          try {
-            await repo.liveGenerate(weekKey(new Date(), p.timezone));
-          } catch {
-            await repo.liveSaveFallback(
-              makePlan(
-                p,
-                {
-                  ...state,
-                  profile: p,
-                  projects: [
-                    ...projects,
-                    ...state.projects.filter(
-                      (existing) =>
-                        !projects.some((project) => project.id === existing.id),
-                    ),
-                  ],
-                },
-                weekKey(new Date(), p.timezone),
-                "fallback",
-              ),
-            );
-            setNotice(
-              "AI planning is unavailable. A deterministic starter plan is ready.",
-            );
-          }
+        if (
+          !state.plans.length ||
+          state.plans.some(
+            (plan) =>
+              plan.source === "fallback" &&
+              plan.week === weekKey(new Date(), p.timezone),
+          )
+        ) {
+          await repo.liveGenerate(weekKey(new Date(), p.timezone));
           await refresh();
         }
       }
@@ -1267,20 +1250,15 @@ export default function App() {
                   try {
                     await repo.liveGenerate(week);
                   } catch {
-                    const existing = state.plans.find((p) => p.week === week);
-                    if (!existing)
-                      await repo.liveSaveFallback(
-                        makePlan(adjustedProfile, next, week, "fallback", c),
-                      );
                     setNotice(
-                      "Your check-in is saved. AI is unavailable; a deterministic plan is ready.",
+                      "Your check-in is saved. AI planning could not finish; retry from Weekly Plan.",
                     );
                   }
                   await refresh();
                 }
                 setModal(null);
                 navigate("/progress");
-              }, "Check-in saved. One streak credit per calendar week; your next plan is ready.")
+              }, "Check-in saved. Your progress has been recorded.")
             }
           />
         </Modal>
@@ -1374,6 +1352,25 @@ function WeeklyPlan({
                 ))}
             </select>
           </label>
+          {selected.source === "fallback" && (
+            <div className="tp-paper-card">
+              <p>
+                This is a starter plan. Generate a personalized plan with
+                Gemini.
+              </p>
+              <PathButton
+                disabled={
+                  busy ||
+                  selected.tasks.some(
+                    (task) => task.status !== "suggested" || !!task.reflection,
+                  )
+                }
+                onClick={onGenerate}
+              >
+                Generate with Gemini
+              </PathButton>
+            </div>
+          )}
           <TaskTracker
             tasks={selected.tasks}
             busy={busy}

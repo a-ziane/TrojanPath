@@ -7,9 +7,9 @@ describe("resolveTheme", () => {
     expect(resolveTheme("dark", false)).toBe("dark");
   });
 
-  it("follows the device setting when nothing valid is saved", () => {
+  it("defaults to dark when nothing valid is saved", () => {
     expect(resolveTheme(null, true)).toBe("dark");
-    expect(resolveTheme(null, false)).toBe("light");
+    expect(resolveTheme(null, false)).toBe("dark");
     expect(resolveTheme("purple", true)).toBe("dark");
   });
 });

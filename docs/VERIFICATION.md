@@ -65,3 +65,10 @@ Remaining external steps: Configure Auth Site URL/redirect URLs and email delive
 - Live persistence uses the existing profile JSON/RLS path. This update’s browser mutations were isolated demo data; a new hosted-account session was not created.
 
 Integration follow-up: rebased Portfolio onto the contributor’s light/dark-mode update (`320f820`), preserving the theme toggle and theme initialization. Portfolio panels, controls, text, borders, and the sticky logo header now use the shared theme tokens; the résumé paper remains white for PDF preview. Combined production build and all 25 tests pass.
+
+## Production AI connection and dark mode — November 15, 2026
+
+- Reproduced production CORS failure: `https://trojanpath.vercel.app` received `Access-Control-Allow-Origin: null`. Deployed corrected headers to generate-plan v7, skill-context v2, and upload-file v3; all three production preflights now return the exact allowed origin.
+- An authorized temporary authenticated test account saved a starter plan, called the hosted generation endpoint, received HTTP 200/source `gemini`, and read back one Gemini plan with three generated tasks. Signed out globally after verification. Temporary account removal is awaiting the Supabase cleanup confirmation.
+- Atomic starter upgrade is owner-scoped and refuses plans with changed task status/reflections; database regression checks cover rollback on invalid plans and preservation of completed work. Existing Gemini plans remain idempotent.
+- Default theme is dark; saved light choices remain supported by the existing toggle. Build, Edge Function type checks, and all 31 tests pass.

@@ -72,7 +72,11 @@ Deno.serve(async (req: Request) => {
       })) as Checkin[],
     };
     const existing = state.plans.find((p) => p.week === week);
-    if (existing && !request.replaceId)
+    if (
+      existing &&
+      !request.replaceId &&
+      !(request.retryStarter && existing.source === "fallback")
+    )
       return json(req, {
         planId: existing.id,
         source: existing.source,
@@ -122,9 +126,19 @@ Deno.serve(async (req: Request) => {
         "AI fallback:",
         error instanceof Error ? error.message : "Invalid provider output",
       );
-      plan = makePlan(profile, state, week, "fallback", feedback);
+      return json(
+        req,
+        {
+          error:
+            "Gemini could not generate a plan right now. Please retry. Your saved work is safe.",
+        },
+        503,
+      );
     }
-    const { error } = await c.rpc("save_plan", { payload: plan });
+    const { error } = await c.rpc(
+      existing?.source === "fallback" ? "upgrade_starter_plan" : "save_plan",
+      { payload: plan },
+    );
     if (error) throw new Error(error.message);
     return json(req, { planId: plan.id, source: plan.source });
   } catch (e) {
