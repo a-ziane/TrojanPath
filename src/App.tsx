@@ -1,3 +1,13 @@
+import { TaskCard as Quest } from "./teammate/TaskCard";
+import { AppShell } from "./teammate/AppShell";
+import { PathwayPage } from "./teammate/PathwayPage";
+import {
+  Button as PathButton,
+  Card as PathCard,
+  Chip as PathChip,
+  PageHeader,
+  Progress as PathProgress,
+} from "./teammate/ui";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   NavLink,
@@ -679,28 +689,46 @@ export default function App() {
       <ScrollReset />
       {!mode ? (
         <main className="welcome">
-          <div className="welcome-art">
-            <Logo />
-            <span className="eyebrow light">YOUR NEXT CHAPTER STARTS HERE</span>
-            <h1>
-              Big dreams.
-              <br />
-              Small steps.
-              <br />
-              <em>Your path.</em>
-            </h1>
-            <p>Turn your goals into your game plan.</p>
-            <div className="welcome-illustration">
-              <div className="orbit one" />
-              <div className="orbit two" />
-              <Avatar />
-              <span className="floating-star">✦</span>
-              <span className="floating-card">
-                <Sparkles size={18} /> A little progress, every week.
+          <div className="welcome-art tp-welcome-art">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-[10px] bg-gold font-display text-[15px] font-bold text-cardinal">
+                TP
               </span>
+              <strong className="font-display text-[23px] text-white">
+                Trojan Path
+              </strong>
             </div>
-            <small>
-              Built for USC students. An independent student project.
+            <div>
+              <svg
+                width="150"
+                height="70"
+                viewBox="0 0 150 70"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 65 C30 65 35 40 65 40 S100 12 140 8"
+                  stroke="#ffcc00"
+                  strokeWidth="3"
+                  strokeDasharray="1 8"
+                  strokeLinecap="round"
+                />
+                <circle cx="142" cy="8" r="6" fill="#ffcc00" />
+              </svg>
+              <h1 className="mt-8 font-display text-[52px] leading-[1.12] font-bold text-white">
+                You don’t need
+                <br />
+                the whole map.
+                <br />
+                <span className="text-gold">Just a next step.</span>
+              </h1>
+              <p className="mt-6 max-w-[360px] text-[18px] text-white/80">
+                Turn your interests into a path worth exploring. Built around
+                you, grounded in USC.
+              </p>
+            </div>
+            <small className="text-white/70">
+              An independent student project · Your pace. Your path.
             </small>
           </div>
           <section className="welcome-form">
@@ -806,207 +834,158 @@ export default function App() {
           </section>
         </main>
       ) : (
-        <div className="app-shell">
-          <aside className="sidebar">
-            <NavLink to="/plan" aria-label="TrojanPath home">
-              <Logo />
-            </NavLink>
-            <div className="workspace-label">YOUR PERSONAL GAME PLAN</div>
-            <nav>
-              {nav.map((n) => (
-                <NavLink
-                  key={n.path}
-                  to={n.path}
-                  className={({ isActive }) =>
-                    isActive ? "nav-item active" : "nav-item"
-                  }
-                >
-                  <n.icon size={20} />
-                  <span>{n.label}</span>
-                  {n.path === "/plan" && <span className="nav-dot" />}
-                </NavLink>
-              ))}
-              <div className="nav-item disabled">
-                <Users size={20} />
-                <span>Connect</span>
-                <small>Coming soon</small>
+        <AppShell
+          state={state}
+          mode={mode}
+          onProfile={() => setModal("profile")}
+          onCheckin={() => setModal("checkin")}
+          onResume={() => setModal("resume")}
+          onLogout={() =>
+            void run(async () => {
+              if (mode === "live") await supabase?.auth.signOut();
+              localStorage.removeItem("trojanpath:mode");
+              setMode(null);
+              setState(emptyState());
+            })
+          }
+        >
+          {!profile ? (
+            <section className="onboarding card">
+              <div className="section-kicker">
+                <Sparkles size={16} />
+                LET’S MAKE THIS YOURS
               </div>
-            </nav>
-            <div className="sidebar-note">
-              <span className="mini-star">✦</span>
-              <h4>Your pace. Your path.</h4>
-              <p>You don’t need to have it all figured out to move forward.</p>
-            </div>
-            <button className="account" onClick={() => setModal("profile")}>
-              <Avatar small color={profile?.avatar} />
-              <span>
-                <strong>{profile?.name || "Your profile"}</strong>
-                <small>{profile?.degree || "Let’s get started"}</small>
-              </span>
-              <ChevronRight size={15} />
-            </button>
-            <button
-              className="logout"
-              onClick={() =>
-                void run(async () => {
-                  if (mode === "live") await supabase?.auth.signOut();
-                  localStorage.removeItem("trojanpath:mode");
-                  setMode(null);
-                  setState(emptyState());
-                })
-              }
-            >
-              <LogOut size={14} /> {mode === "demo" ? "Exit demo" : "Sign out"}
-            </button>
-          </aside>
-          <div className="main-shell">
-            <header className="topbar">
-              <div>
-                <span className="breadcrumb">Your workspace</span>
-                <ChevronRight size={13} />
-                <strong>
-                  {nav.find((n) => location.hash.includes(n.path))?.label ||
-                    "Weekly Plan"}
-                </strong>
-              </div>
-              <div className="top-actions">
-                <span className={`mode-badge ${mode === "demo" ? "demo" : ""}`}>
-                  {mode === "demo" ? "DEMO MODE" : "LIVE ACCOUNT"}
-                </span>
-                <span className="top-streak">
-                  <Flame size={16} />
-                  {streak(state.checkins, new Date(), profile?.timezone)} week
-                  streak
-                </span>
-                <Avatar small color={profile?.avatar} />
-              </div>
-            </header>
-            <main className="main-content">
-              {!profile ? (
-                <section className="onboarding card">
-                  <div className="section-kicker">
-                    <Sparkles size={16} />
-                    LET’S MAKE THIS YOURS
-                  </div>
-                  <h1>Every great path starts with you.</h1>
-                  <ProfileForm
-                    initial={
-                      mode === "demo"
-                        ? demoProfile
-                        : {
-                            ...demoProfile,
-                            name: "",
-                            email: authEmail,
-                            major: "",
-                            interests: [],
-                            skills: [],
-                            goal: "I’m exploring",
-                            hours: 3,
-                            displayName: "",
-                          }
-                    }
-                    onSave={saveProfile}
+              <h1>Every great path starts with you.</h1>
+              <ProfileForm
+                initial={
+                  mode === "demo"
+                    ? demoProfile
+                    : {
+                        ...demoProfile,
+                        name: "",
+                        email: authEmail,
+                        major: "",
+                        interests: [],
+                        skills: [],
+                        goal: "I’m exploring",
+                        hours: 3,
+                        displayName: "",
+                      }
+                }
+                onSave={saveProfile}
+                busy={busy}
+                mode={mode}
+              />
+            </section>
+          ) : (
+            <Routes>
+              <Route
+                path="/plan"
+                element={
+                  <WeeklyPlan
+                    profile={profile}
+                    plan={currentPlan}
+                    plans={state.plans}
                     busy={busy}
-                    mode={mode}
+                    onTask={changeTask}
+                    onReplace={replace}
+                    onCheckin={() => setModal("checkin")}
+                    onGenerate={() =>
+                      void run(async () => {
+                        const week = weekKey(new Date(), profile.timezone);
+                        if (mode === "demo")
+                          commit({
+                            ...state,
+                            plans: [
+                              makePlan(profile, state, week),
+                              ...state.plans,
+                            ],
+                          });
+                        else {
+                          await repo.liveGenerate(week);
+                          await refresh();
+                        }
+                      })
+                    }
+                    onFallback={() =>
+                      void run(async () => {
+                        const week = weekKey(new Date(), profile.timezone);
+                        const plan = makePlan(
+                          profile,
+                          state,
+                          week,
+                          mode === "demo" ? "demo" : "fallback",
+                        );
+                        if (mode === "demo")
+                          commit({
+                            ...state,
+                            plans: [plan, ...state.plans],
+                          });
+                        else {
+                          await repo.liveSaveFallback(plan);
+                          await refresh();
+                        }
+                      })
+                    }
+                    xp={xp}
+                    projects={state.projects.length}
                   />
-                </section>
-              ) : (
-                <Routes>
-                  <Route
-                    path="/plan"
-                    element={
-                      <WeeklyPlan
-                        profile={profile}
-                        plan={currentPlan}
-                        plans={state.plans}
-                        busy={busy}
-                        onTask={changeTask}
-                        onReplace={replace}
-                        onCheckin={() => setModal("checkin")}
-                        onGenerate={() =>
-                          void run(async () => {
-                            const week = weekKey(new Date(), profile.timezone);
-                            if (mode === "demo")
-                              commit({
-                                ...state,
-                                plans: [
-                                  makePlan(profile, state, week),
-                                  ...state.plans,
-                                ],
-                              });
-                            else {
-                              await repo.liveGenerate(week);
-                              await refresh();
-                            }
-                          })
-                        }
-                        onFallback={() =>
-                          void run(async () => {
-                            const week = weekKey(new Date(), profile.timezone);
-                            const plan = makePlan(
-                              profile,
-                              state,
-                              week,
-                              mode === "demo" ? "demo" : "fallback",
-                            );
-                            if (mode === "demo")
-                              commit({
-                                ...state,
-                                plans: [plan, ...state.plans],
-                              });
-                            else {
-                              await repo.liveSaveFallback(plan);
-                              await refresh();
-                            }
-                          })
-                        }
-                        xp={xp}
-                        projects={state.projects.length}
-                      />
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProfilePage
+                    profile={profile}
+                    state={state}
+                    onEdit={() => setModal("profile")}
+                    onProject={(p) => {
+                      setEditing(p || null);
+                      setModal("project");
+                    }}
+                    onResume={() => setModal("resume")}
+                    onPost={(p) =>
+                      setPost(
+                        `I recently completed ${p.title}.\n\n${p.description}\n\nThis project gave me an opportunity to work with ${p.skills.join(", ") || "new ideas"}. I’m looking forward to building on what I learned.${p.url ? "\n\n" + p.url : ""}\n\n#StudentProjects #LearningByDoing`,
+                      )
                     }
                   />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProfilePage
-                        profile={profile}
-                        state={state}
-                        onEdit={() => setModal("profile")}
-                        onProject={(p) => {
-                          setEditing(p || null);
-                          setModal("project");
-                        }}
-                        onResume={() => setModal("resume")}
-                        onPost={(p) =>
-                          setPost(
-                            `I recently completed ${p.title}.\n\n${p.description}\n\nThis project gave me an opportunity to work with ${p.skills.join(", ") || "new ideas"}. I’m looking forward to building on what I learned.${p.url ? "\n\n" + p.url : ""}\n\n#StudentProjects #LearningByDoing`,
-                          )
-                        }
-                      />
-                    }
+                }
+              />
+              <Route
+                path="/progress"
+                element={
+                  <PathwayPage
+                    state={state}
+                    onEdit={() => setModal("profile")}
                   />
-                  <Route
-                    path="/progress"
-                    element={<Progress state={state} mode={mode} />}
-                  />
-                  <Route
-                    path="/opportunities"
-                    element={<Opportunities state={state} mode={mode} />}
-                  />
-                  <Route path="/resources" element={<Resources />} />
-                  <Route path="*" element={<Navigate to="/plan" replace />} />
-                </Routes>
-              )}
-              <footer>
-                Made for your next chapter.{" "}
-                <span>TrojanPath · An independent student project</span>
-                {mode === "demo" && (
-                  <button onClick={repo.resetDemo}>Reset demo</button>
-                )}
-              </footer>
-            </main>
-          </div>
-        </div>
+                }
+              />
+              <Route
+                path="/opportunities"
+                element={<Opportunities state={state} mode={mode} />}
+              />
+              <Route
+                path="/leaderboard"
+                element={<Progress state={state} mode={mode} />}
+              />
+              <Route
+                path="/path"
+                element={<Navigate to="/progress" replace />}
+              />
+              <Route path="/week" element={<Navigate to="/plan" replace />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="*" element={<Navigate to="/plan" replace />} />
+            </Routes>
+          )}
+          <footer>
+            Made for your next chapter.{" "}
+            <span>TrojanPath · An independent student project</span>
+            {mode === "demo" && (
+              <button onClick={repo.resetDemo}>Reset demo</button>
+            )}
+          </footer>
+        </AppShell>
       )}
       {(error || notice) && (
         <div
@@ -1200,155 +1179,84 @@ function WeeklyPlan({
       0,
     ) || 0;
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">SMALL STEPS. REAL MOMENTUM.</span>
-          <h1>
-            Your next chapter, {profile.name}
-            <span className="gold-text">.</span>
-          </h1>
-          <p>A little direction. A few doable steps. A future that’s yours.</p>
-        </div>
-        <button className="secondary" onClick={onCheckin}>
-          <Leaf size={17} /> Weekly check-in
-        </button>
-      </div>
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="hero-label">
-            <span /> YOUR PATH IS TAKING SHAPE
-          </span>
-          <h2>
-            You don’t need the whole map.
-            <br />
-            Just your next <em>good step.</em>
-          </h2>
-          <p>
-            {selected?.direction ||
-              "Let’s turn your interests into a manageable first week."}
+    <div className="flex flex-col gap-7">
+      <PageHeader
+        eyebrow="Your weekly game plan"
+        title="This week’s quests"
+        subtitle={`A few manageable steps, chosen for you, ${profile.name.split(" ")[0]}.`}
+        actions={
+          <PathButton variant="secondary" onClick={onCheckin}>
+            Start check-in →
+          </PathButton>
+        }
+      />
+      <div className="tp-stats-grid">
+        <PathCard>
+          <p className="text-[13px] text-muted">Quests completed</p>
+          <p className="mt-2 font-display text-[30px] font-bold">
+            {complete}
+            <span className="text-[18px] text-muted">
+              {" "}
+              / {selected?.tasks.length || 0}
+            </span>
           </p>
-          <div className="hero-tags">
-            <span>
-              <Target size={14} />
-              {discipline(profile) === "technology"
-                ? "Data & machine learning"
-                : discipline(profile)}
-            </span>
-            <span>
-              <Clock3 size={14} />
-              {profile.hours} hrs / week
-            </span>
-          </div>
-        </div>
-        <div className="hero-art">
-          <div className="art-circle" />
-          <div className="stair s1" />
-          <div className="stair s2" />
-          <div className="stair s3" />
-          <Avatar color={profile.avatar} />
-          <Star className="art-star" size={30} />
-          <span className="art-spark">✧</span>
-          <span className="art-plant">✦</span>
-        </div>
-      </section>
-      <div className="stat-grid">
-        <div className="stat">
-          <span className="stat-icon gold">
-            <Star size={19} />
-          </span>
-          <div>
-            <span>Total XP</span>
-            <strong>
-              {xp} <small>XP</small>
-            </strong>
-          </div>
-          <span className="stat-caption">Every step counts</span>
-        </div>
-        <div className="stat">
-          <span className="stat-icon sage">
-            <CheckCircle2 size={19} />
-          </span>
-          <div>
-            <span>Weekly quests</span>
-            <strong>
-              {complete}
-              <small> / {selected?.tasks.length || 0} complete</small>
-            </strong>
-          </div>
-          <div className="mini-progress">
-            <i
-              style={{
-                width: `${(100 * complete) / (selected?.tasks.length || 1)}%`,
-              }}
-            />
-          </div>
-        </div>
-        <div className="stat">
-          <span className="stat-icon rose">
-            <FolderPlus size={19} />
-          </span>
-          <div>
-            <span>Your portfolio</span>
-            <strong>
-              {projects}
-              <small> projects added</small>
-            </strong>
-          </div>
-          <NavLink
-            to="/profile"
-            className="stat-link"
-            aria-label="View projects"
-          >
-            <ArrowUpRight size={19} />
-          </NavLink>
-        </div>
+        </PathCard>
+        <PathCard>
+          <p className="text-[13px] text-muted">Your level</p>
+          <p className="mt-2 font-display text-[30px] font-bold">
+            Level {Math.floor(xp / 100) + 1}
+          </p>
+          <PathProgress value={(xp % 100) / 100} />
+          <p className="mt-2 text-[12px] text-muted">
+            {xp} XP · {100 - (xp % 100)} to the next level
+          </p>
+        </PathCard>
+        <PathCard>
+          <p className="text-[13px] text-muted">Made to fit your week</p>
+          <p className="mt-2 font-display text-[30px] font-bold">
+            {minutes} <span className="text-[18px] text-muted">minutes</span>
+          </p>
+          <p className="mt-2 text-[12px] text-muted">
+            Your budget: {profile.hours} hours · {projects} projects saved
+          </p>
+        </PathCard>
       </div>
-      <div className="plan-layout">
-        <section>
-          <div className="section-title">
-            <div>
-              <span className="section-kicker">YOUR WEEKLY GAME PLAN</span>
-              <h2>A few quests. A step forward.</h2>
-            </div>
-            <span className="time-pill">
-              <Clock3 size={14} />
-              {minutes} min planned
-            </span>
-          </div>
+      <div className="tp-week-grid">
+        <section className="min-w-0">
           {selected ? (
             <>
-              <div className="plan-toolbar">
-                <div className="tabs">
-                  {["all", "to do", "completed"].map((f) => (
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex gap-2">
+                  {["all", "active", "completed"].map((f) => (
                     <button
                       key={f}
                       onClick={() => setFilter(f)}
-                      className={f === filter ? "active" : ""}
+                      aria-pressed={filter === f}
+                      className={`rounded-full px-4 py-2 text-[13px] font-semibold ${filter === f ? "bg-cardinal text-white" : "bg-surface text-muted border border-border"}`}
                     >
-                      {f === "all"
-                        ? "All quests"
-                        : f === "to do"
-                          ? "To do"
-                          : "Completed"}
+                      {f[0].toUpperCase() + f.slice(1)}
                     </button>
                   ))}
                 </div>
-                <select
-                  aria-label="View saved weekly plan"
-                  value={selected.id}
-                  onChange={(e) => setView(e.target.value)}
-                >
-                  {[...plans]
-                    .sort((a, b) => b.week.localeCompare(a.week))
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        Week of {p.week}
-                      </option>
-                    ))}
-                </select>
+                <label className="text-[12px] text-muted">
+                  Saved week
+                  <select
+                    aria-label="Saved week"
+                    className="ml-2 rounded-lg border border-border bg-surface p-2"
+                    value={selected.id}
+                    onChange={(e) => setView(e.target.value)}
+                  >
+                    {[...plans]
+                      .sort((a, b) => b.week.localeCompare(a.week))
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          Week of {p.week}
+                        </option>
+                      ))}
+                  </select>
+                </label>
               </div>
-              <div className="quest-list">
+              <div className="flex flex-col gap-4">
                 {selected.tasks
                   .filter(
                     (t) =>
@@ -1368,271 +1276,86 @@ function WeeklyPlan({
                       onReplace={() => onReplace(t)}
                     />
                   ))}
-                {!selected.tasks.some(
-                  (t) =>
-                    filter === "all" ||
-                    (filter === "completed"
-                      ? t.status === "completed"
-                      : !["completed", "skipped"].includes(t.status)),
-                ) && (
-                  <div className="card empty">
-                    <CheckCircle2 />
-                    <h3>
-                      {filter === "completed"
-                        ? "Your first win is waiting."
-                        : "You’ve made room for what’s next."}
-                    </h3>
-                    <p>
-                      Every suggestion is yours to accept, replace, or skip.
-                    </p>
-                  </div>
-                )}
               </div>
-              <div className="generation-note">
-                <Sparkles size={14} />
-                {selected.source === "demo"
-                  ? "Demo · Personalized, deterministic suggestions"
-                  : selected.source === "fallback"
-                    ? "Fallback plan · AI unavailable; deterministic suggestions"
-                    : "Generated with Gemini · Review suggestions before acting"}
-              </div>
-              <p className="adaptation">{selected.change}</p>
+              {filter === "completed" && complete === 0 && (
+                <PathCard>
+                  <p className="text-muted">
+                    Your first win is waiting. Complete a quest when you’re
+                    ready.
+                  </p>
+                </PathCard>
+              )}
+              <p className="mt-4 text-[12px] text-muted">
+                {selected.source === "gemini"
+                  ? "Generated with Gemini · Review suggestions before acting"
+                  : selected.source === "demo"
+                    ? "Demo · Deterministic sample suggestions"
+                    : "Fallback plan · Deterministic suggestions; AI unavailable"}
+              </p>
             </>
           ) : (
-            <div className="card empty">
-              <Map />
-              <h3>Your path is ready to begin.</h3>
-              <button className="primary" disabled={busy} onClick={onGenerate}>
-                {busy ? "Building your plan…" : "Generate first plan"}
-              </button>
-              <button
-                className="text-button"
-                onClick={onFallback}
-                disabled={busy}
-              >
-                Use a deterministic starter plan
-              </button>
-            </div>
+            <PathCard>
+              <h2 className="font-display text-[24px] font-bold">
+                Your path is ready to begin.
+              </h2>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <PathButton onClick={onGenerate} disabled={busy}>
+                  {busy ? "Building your plan…" : "Generate first plan"}
+                </PathButton>
+                <PathButton
+                  variant="secondary"
+                  onClick={onFallback}
+                  disabled={busy}
+                >
+                  Use a starter plan
+                </PathButton>
+              </div>
+            </PathCard>
           )}
         </section>
-        <aside className="right-rail">
-          <section className="card pathway">
-            <div className="section-kicker">
-              <Rocket size={15} /> THE BIGGER PICTURE
-            </div>
-            <h3>Your career pathway</h3>
-            <p className="muted">A direction, not a deadline.</p>
-            <ol>
-              {(
-                selected?.milestones || [
-                  "Explore your direction",
-                  "Build something real",
-                  "Show your strengths",
-                ]
-              ).map((m, i) => (
-                <li
-                  key={m}
-                  className={
-                    i === Math.min(3, Math.floor(xp / 100)) ? "current" : ""
-                  }
-                >
-                  <span>
-                    {i < Math.floor(xp / 100) ? <Check size={13} /> : i + 1}
-                  </span>
-                  <div>
-                    <strong>{m}</strong>
-                    <small>
-                      {i === Math.min(3, Math.floor(xp / 100))
-                        ? "You’re here · keep exploring"
-                        : i < Math.floor(xp / 100)
-                          ? "Progress made"
-                          : "Up ahead"}
-                    </small>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <NavLink to="/progress" className="text-link">
-              See your progress <ArrowRight size={15} />
-            </NavLink>
-          </section>
-          <section className="checkin-card">
-            <div className="checkin-icon">
-              <Leaf size={22} />
-            </div>
-            <span className="section-kicker">PAUSE. REFLECT. RESET.</span>
-            <h3>Your plan grows with you.</h3>
-            <p>
-              Loved building? Busy week? Tell us what worked. We’ll help you
-              find your next step.
+        <aside className="flex flex-col gap-5">
+          <div className="rounded-[20px] bg-gold-soft p-6">
+            <PathChip tone="goldSolid">✦ Adjusted for you</PathChip>
+            <h2 className="mt-4 font-display text-[22px] font-bold">
+              A plan that fits your life.
+            </h2>
+            <p className="mt-3 text-[14px] text-muted">
+              {selected?.change ||
+                "Tell us about your interests and availability to find your next step."}
             </p>
-            <button onClick={onCheckin}>
-              Check in this week <ArrowRight size={16} />
-            </button>
-            <small>Suggested on Sundays · Open all week</small>
-          </section>
-          <p className="rail-footnote">
-            <Sparkles size={14} /> These are suggestions, not assignments.
-            <br />
-            Make your path your own.
-          </p>
+            <p className="mt-3 text-[13px] text-muted">
+              Suggestions, not assignments. Accept, replace, or skip anything.
+            </p>
+          </div>
+          <PathCard>
+            <h2 className="font-display text-[20px] font-bold">
+              The bigger picture
+            </h2>
+            <p className="mt-3 text-[14px] text-muted">
+              {selected?.direction || profile.goal}
+            </p>
+            <PathButton variant="secondary" href="/progress" className="mt-5">
+              Explore your pathway →
+            </PathButton>
+          </PathCard>
+          <PathCard>
+            <h2 className="font-display text-[20px] font-bold">
+              Pause. Reflect. Reset.
+            </h2>
+            <p className="mt-3 text-[14px] text-muted">
+              A busy week or a new interest? Your check-in helps shape next
+              week.
+            </p>
+            <PathButton onClick={onCheckin} className="mt-5">
+              Check in this week
+            </PathButton>
+          </PathCard>
         </aside>
       </div>
-    </>
+    </div>
   );
 }
-function Quest({
-  task: t,
-  index,
-  busy,
-  onStatus,
-  onReflection,
-  onReplace,
-}: {
-  task: Task;
-  index: number;
-  busy: boolean;
-  onStatus: (s: Task["status"]) => void;
-  onReflection: (r: string) => void;
-  onReplace: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false),
-    [reflection, setReflection] = useState(t.reflection);
-  const Icon =
-    t.category === "projects"
-      ? Rocket
-      : t.category === "skills"
-        ? BookOpen
-        : t.category === "research"
-          ? Search
-          : t.category === "networking"
-            ? Users
-            : Compass;
-  return (
-    <article
-      className={`quest card ${t.status === "completed" ? "quest-complete" : ""} ${t.status === "skipped" ? "quest-skipped" : ""}`}
-    >
-      <div className="quest-top">
-        <span className={`category-icon category-${t.category}`}>
-          <Icon size={19} />
-        </span>
-        <div className="quest-meta">
-          <span>{t.category}</span>
-          <i />
-          Quest {String(index + 1).padStart(2, "0")}
-        </div>
-        <span className="xp-pill">+{t.xp} XP</span>
-      </div>
-      <h3>{t.title}</h3>
-      <p>{t.instructions}</p>
-      <div className="quest-bottom">
-        <span>
-          <Clock3 size={14} />
-          {t.minutes} min
-        </span>
-        <button className="text-button" onClick={() => setExpanded(!expanded)}>
-          {expanded ? "Less detail" : "Why this fits you"}{" "}
-          <ChevronRight size={13} />
-        </button>
-      </div>
-      {expanded && (
-        <div className="quest-details">
-          <p>
-            <strong>Why it fits:</strong> {t.why}
-          </p>
-          <p>
-            <strong>Done when:</strong> {t.criteria}
-          </p>
-          {t.resourceIds.map((id) => {
-            const r = resources.find((r) => r.id === id);
-            return (
-              r && (
-                <a key={id} href={r.url} target="_blank" rel="noreferrer">
-                  {r.title} <ArrowUpRight size={12} />
-                </a>
-              )
-            );
-          })}
-          <label>
-            Reflection or evidence
-            <textarea
-              value={reflection}
-              onChange={(e) => setReflection(e.target.value)}
-              placeholder="What did you learn? Add a note or evidence link."
-            />
-          </label>
-          <button
-            className="secondary small-button"
-            disabled={busy}
-            onClick={() => onReflection(reflection)}
-          >
-            Save reflection
-          </button>
-        </div>
-      )}
-      <div className="quest-actions">
-        <span className={`status status-${t.status.replace(" ", "-")}`}>
-          {t.status === "completed" ? (
-            <CheckCircle2 size={14} />
-          ) : (
-            <span className="status-dot" />
-          )}
-          {t.status}
-        </span>
-        <div>
-          {!["completed", "skipped"].includes(t.status) && (
-            <>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={onReplace}
-              >
-                <RefreshCw size={13} />
-                Replace
-              </button>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => onStatus("skipped")}
-              >
-                Skip
-              </button>
-              {t.status === "suggested" && (
-                <button
-                  className="secondary small-button"
-                  disabled={busy}
-                  onClick={() => onStatus("in progress")}
-                >
-                  Accept
-                </button>
-              )}
-              <button
-                className="complete-button"
-                disabled={busy}
-                onClick={() => onStatus("completed")}
-              >
-                <Check size={14} />
-                Complete
-              </button>
-            </>
-          )}
-          {t.status === "skipped" && (
-            <button
-              className="text-button"
-              disabled={busy}
-              onClick={() => onStatus("suggested")}
-            >
-              Restore suggestion
-            </button>
-          )}
-          {t.status === "completed" && (
-            <span className="completion-label">A step worth celebrating.</span>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
+
 function ProjectForm({
   initial,
   busy,
@@ -2181,141 +1904,105 @@ function Progress({ state, mode }: { state: AppState; mode: string }) {
         ].sort((a, b) => b.xp - a.xp)
       : leaders;
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">LOOK HOW FAR YOU’VE COME</span>
-          <h1>Progress has a way of adding up.</h1>
-          <p>A little practice. A little courage. A step closer.</p>
-        </div>
-        <span className="time-pill">
-          <Flame size={16} />
-          {streak(state.checkins, now, p.timezone)} week streak
-        </span>
-      </div>
-      <div className="progress-layout">
-        <section
-          className={`card ladder-card theme-${p.theme.replace(" ", "-")}`}
-        >
-          <div className="section-kicker">
-            <Star size={16} />
-            YOUR {p.theme.toUpperCase()} JOURNEY
+    <div className="flex flex-col gap-7">
+      <PageHeader
+        eyebrow="A little friendly momentum"
+        title="Monthly leaderboard"
+        subtitle={
+          mode === "demo"
+            ? "Illustrative rankings · Fictional students"
+            : "Opt-in students · Display names only"
+        }
+      />
+      <div className="tp-week-grid">
+        <PathCard>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-[22px] font-bold">
+              This month’s explorers
+            </h2>
+            <PathChip tone="gold">{month}</PathChip>
           </div>
-          <h2>
-            Level {level} · {xp} XP
-          </h2>
-          <p>{XP.level - (xp % XP.level)} XP to your next level</p>
-          <div className="ladder">
-            <div className="ladder-line" />
-            {[3, 2, 1, 0].map((step) => (
+          {rows.length ? (
+            rows.map((r, i) => (
               <div
-                className={`ladder-step ${Math.floor(xp / 100) >= step ? "reached" : ""}`}
-                key={step}
+                key={r.name}
+                className="flex items-center gap-4 border-b border-border py-5"
               >
-                <div className="ladder-rung">
-                  <span>{step * 100} XP</span>
-                </div>
-                <div className="ladder-info">
-                  <h3>
-                    {
-                      [
-                        "Find your footing",
-                        "Build momentum",
-                        "Make your mark",
-                        "Keep growing",
-                      ][step]
-                    }
-                  </h3>
-                  <small>
-                    {Math.floor(xp / 100) === step
-                      ? "Your current milestone"
-                      : xp >= step * 100
-                        ? "Milestone reached"
-                        : "Up ahead"}
-                  </small>
-                </div>
-                {Math.min(3, Math.floor(xp / 100)) === step && (
-                  <Avatar color={p.avatar} />
-                )}
+                <span
+                  className={`flex size-9 items-center justify-center rounded-full font-bold ${i === 0 ? "bg-gold text-ink" : "bg-bg text-muted"}`}
+                >
+                  {i + 1}
+                </span>
+                <strong className="flex-1 text-[15px]">{r.name}</strong>
+                <span className="text-[14px] font-semibold text-cardinal">
+                  {r.xp} XP
+                </span>
               </div>
-            ))}
-          </div>
-          <p className="fine">
-            XP celebrates participation, not professional mastery. Themes are
-            visual; your progress always belongs to you.
-          </p>
-        </section>
-        <div className="right-rail">
-          <section className="card">
-            <div className="section-kicker">
-              <Trophy size={16} />A LITTLE FRIENDLY MOMENTUM
-            </div>
-            <h3>Monthly leaderboard</h3>
-            <p className="muted">
-              {mode === "demo"
-                ? "Illustrative rankings · Fictional students"
-                : "Opt-in students · Display names only"}
+            ))
+          ) : (
+            <p className="py-6 text-muted">
+              No participants yet. Opt in from your profile if you’d like to
+              join.
             </p>
-            {rows.length ? (
-              rows.map((r, i) => (
-                <div className="leader" key={r.name}>
-                  <b>{i + 1}</b>
-                  <span>{r.name}</span>
-                  <strong>
-                    {r.xp} <small>XP</small>
-                  </strong>
-                </div>
-              ))
-            ) : (
-              <p>
-                No participants yet. Opt in from your profile if you’d like to
-                join.
-              </p>
-            )}
-            <small>
-              {p.leaderboard
-                ? "You’re opted in. Change this in your profile anytime."
-                : "You’re not participating. You can opt in from your profile."}
-            </small>
-          </section>
-          <section className="reward-card">
-            <Star size={28} />
-            <span className="section-kicker">ILLUSTRATIVE REWARD PREVIEW</span>
-            <h3>A little extra motivation.</h3>
-            <p>Imagine celebrating a month of progress with Trojan gear.</p>
-            <small>
-              No funded prizes or claims. This is a concept preview only.
-            </small>
-          </section>
-          <section className="card">
-            <h3>Your recent wins</h3>
+          )}
+          <p className="mt-5 text-[13px] text-muted">
+            {p.leaderboard
+              ? "You’re opted in. Change this in your profile anytime."
+              : "You’re not participating. You can opt in from your profile."}
+          </p>
+          <PathButton variant="secondary" href="/profile" className="mt-4">
+            Manage participation
+          </PathButton>
+        </PathCard>
+        <div className="flex flex-col gap-5">
+          <PathCard>
+            <p className="text-[13px] text-muted">Your month so far</p>
+            <h2 className="mt-2 font-display text-[32px] font-bold">
+              {monthXP} XP
+            </h2>
+            <p className="mt-2 text-[14px] text-muted">
+              Level {level} · {xp} lifetime XP
+            </p>
+            <p className="mt-3 text-[13px] text-muted">
+              {streak(state.checkins, now, p.timezone)} week check-in streak
+            </p>
+          </PathCard>
+          <PathCard>
+            <h2 className="font-display text-[20px] font-bold">
+              Your recent wins
+            </h2>
             {state.xp
               .slice(-5)
               .reverse()
               .map((e) => (
-                <div className="xp-event" key={e.key}>
-                  <CheckCircle2 size={16} />
+                <div
+                  className="flex items-center justify-between gap-3 border-b border-border py-4 text-[13px]"
+                  key={e.key}
+                >
                   <span>
                     {e.key.startsWith("project:")
                       ? "Completed project"
                       : "Completed quest"}
                   </span>
-                  <strong>+{e.amount}</strong>
+                  <strong className="text-success">+{e.amount}</strong>
                 </div>
               ))}
             {!state.xp.length && (
-              <p className="muted">Your first win is one small step away.</p>
+              <p className="mt-3 text-[14px] text-muted">
+                Your first win is one small step away.
+              </p>
             )}
-            <small>
+            <p className="mt-4 text-[12px] text-muted">
               Quests earn 10 XP per started 15 minutes. Completed projects earn
               100 XP once.
-            </small>
-          </section>
+            </p>
+          </PathCard>
         </div>
       </div>
-    </>
+    </div>
   );
 }
+
 function Opportunities({ state, mode }: { state: AppState; mode: string }) {
   const [query, setQuery] = useState("");
   const p = state.profile!;

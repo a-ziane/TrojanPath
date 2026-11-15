@@ -118,3 +118,9 @@ No social network, automated LinkedIn publishing, funded prizes, official USC SS
 ### Local key file
 
 A local Gemini key belongs in `supabase/functions/.env` (copy the adjacent `.env.example`). This file is ignored by Git. It is not deployed by a frontend build; copy the secret into Supabase’s Edge Function Secrets for hosted generation. `node scripts/check-gemini.mjs` validates the local key without printing it; `node scripts/test-gemini.mjs` exercises a real structured plan with synthetic data only. Local backend execution additionally requires the Supabase local stack and its runtime environment, or deploying the functions to your project.
+
+## Teammate frontend integration
+
+The main interface adapts [zahitisani3-rgb/ncojoc](https://github.com/zahitisani3-rgb/ncojoc) at commit `6b7ea848f274ad0f5da32f9da7a6b587d736e703`: the TP identity, cardinal/gold palette, DM Sans / Space Grotesk typography, sidebar, mountain trail, shared UI components, and quest card layout. Ported components live in `src/teammate/`.
+
+The original Next.js/Zustand demo was adapted to the existing Vite app, keeping the live Supabase/Gemini integration and saved records. Pathway progression comes from earned XP; quests retain accept, replace, skip, completion, resources, and reflection. Check-ins and résumé editing open from the sidebar. Profile/project uploads and USC resources remain available. The leaderboard uses the existing opt-in database function in live mode; demo rankings remain explicitly fictional. No new API keys or database migrations are needed for this interface update. Existing Vercel settings remain valid.

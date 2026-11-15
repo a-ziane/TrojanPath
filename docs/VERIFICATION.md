@@ -20,3 +20,11 @@ Verified November 14, 2026 (America/Los_Angeles).
 Hosted AI follow-up: after the key was saved in Supabase Secrets, authenticated generation returned `source: gemini` and persisted a real plan and its tasks. The verification used synthetic data, then revoked the session and removed the disposable account and records.
 
 Remaining external steps: Configure Auth Site URL/redirect URLs and email delivery for the intended hosted origin. Push source and enable GitHub Pages with the two public repository variables to deploy the frontend. Opportunity examples remain samples, résumé parsing is manual, and rewards remain illustrative.
+
+## Teammate frontend update
+
+- Integrated frontend source: `ncojoc@6b7ea848f274ad0f5da32f9da7a6b587d736e703`.
+- Production build and TypeScript: pass; all 10 existing tests pass.
+- Isolated browser demo: onboard profile, complete three quests, verify 100 XP / Level 2, and confirm the mountain’s current milestone advances to “Build something real.”
+- Submit a check-in: streak becomes 1, next week is saved, and completed suggestions are excluded from the new plan.
+- Backend contracts and secrets are unchanged; live Gemini and private upload verification above remain applicable. This update’s browser mutation tests used isolated local demo data, not a live student account.
