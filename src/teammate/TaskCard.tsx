@@ -1,3 +1,4 @@
+import { HACKSC_TASK_TITLE, HACKSC_URL } from "../../shared/demoTasks";
 import { useEffect, useState } from "react";
 import {
   Check,
@@ -89,6 +90,11 @@ export function TaskCard({
             <summary>Why suggested?</summary>
             <p>{t.why}</p>
           </details>
+          {t.title === HACKSC_TASK_TITLE && (
+            <a href={HACKSC_URL} target="_blank" rel="noreferrer">
+              HackSC event information ↗
+            </a>
+          )}
           {t.resourceIds.map((id) => {
             const r = resources.find((r) => r.id === id);
             return r ? (

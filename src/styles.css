@@ -4679,3 +4679,338 @@
   line-height: 22px;
   min-width: 0;
 }
+
+/* Profile follows the supplied reference: identity banner, three cards, projects. */
+.profile-reference-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: linear-gradient(110deg, #fff9df 0%, #fffdf7 40%, #fff 78%);
+  border: 1px solid #efdfa7;
+  border-radius: 24px;
+  padding: 26px 28px;
+  min-height: 170px;
+}
+.profile-guide {
+  width: 96px;
+  height: 110px;
+  flex-shrink: 0;
+}
+.profile-guide svg {
+  width: 100%;
+  height: 100%;
+}
+.profile-identity-copy {
+  min-width: 0;
+  flex: 1;
+}
+.profile-identity-copy h1 {
+  font:
+    700 30px/1.2 "Space Grotesk",
+    sans-serif;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+.profile-identity-copy > p {
+  font-size: 14px;
+  color: #81776d;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.profile-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.profile-pills > span {
+  background: #f2eee7;
+  color: #655c52;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 5px 10px;
+  overflow-wrap: anywhere;
+}
+.profile-pills > span.profile-level-pill {
+  background: #fff0ba;
+  color: #725619;
+}
+.profile-pills.interests > span {
+  background: #f8e7e7;
+  color: #990000;
+}
+.profile-identity-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.profile-identity-actions button {
+  font-size: 13px;
+  padding: 12px 15px;
+  background: #ffffffc9;
+}
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.profile-info-card {
+  background: white;
+  border: 1px solid #eae2d8;
+  box-shadow: 0 3px 8px #59432b05;
+  border-radius: 22px;
+  padding: 22px;
+  min-height: 170px;
+  min-width: 0;
+}
+.profile-info-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    700 18px "Space Grotesk",
+    sans-serif;
+  margin-bottom: 17px;
+}
+.profile-info-card h2 svg {
+  color: #c39534;
+  flex-shrink: 0;
+}
+.profile-info-card:nth-child(2) h2 svg {
+  color: #6e8d96;
+}
+.profile-info-card:nth-child(3) h2 svg {
+  color: #990000;
+}
+.profile-goal {
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.profile-info-card > small {
+  font-size: 12px;
+  color: #81776d;
+  display: block;
+  margin-top: 16px;
+}
+.profile-skill-details {
+  font-size: 12px;
+  color: #6e6461;
+  margin-top: 15px;
+  line-height: 1.6;
+}
+.profile-skill-details summary {
+  cursor: pointer;
+  font-size: 11px;
+}
+.profile-skill-details p {
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+.profile-background {
+  font-size: 12px;
+  color: #6e6461;
+  line-height: 1.7;
+}
+.profile-background summary {
+  cursor: pointer;
+}
+.profile-background > p {
+  margin-top: 12px;
+}
+.profile-projects-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+}
+.profile-projects-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font:
+    700 22px "Space Grotesk",
+    sans-serif;
+}
+.profile-projects-heading h2 svg {
+  color: #ad5b43;
+}
+.profile-projects-heading button {
+  font-size: 13px;
+  padding: 13px 17px;
+}
+.profile-project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.profile-project-card {
+  border: 1px solid #eae2d8;
+  border-radius: 22px;
+  padding: 22px;
+  background: white;
+  box-shadow: 0 3px 8px #59432b05;
+  min-width: 0;
+}
+.profile-project-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.profile-project-meta > span {
+  font-size: 10px;
+  padding: 5px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 16px;
+  font-weight: 600;
+}
+.profile-project-done {
+  background: #e3f3e9;
+  color: #2e7d4f;
+}
+.profile-project-pending {
+  background: #fff4c8;
+  color: #806322;
+}
+.profile-project-meta time {
+  font-size: 11px;
+  color: #81776d;
+}
+.profile-project-card h3 {
+  font:
+    700 17px/1.4 "Space Grotesk",
+    sans-serif;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.profile-project-card > p {
+  font-size: 13px;
+  color: #6e6461;
+  line-height: 1.7;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.profile-project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 20px;
+  font-size: 11px;
+  color: #81776d;
+}
+.profile-project-actions a {
+  color: #990000;
+}
+.profile-no-projects {
+  border: 1px dashed #ded5c6;
+  border-radius: 18px;
+  padding: 28px;
+  color: #81776d;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.profile-no-projects .tp-detail-button {
+  margin: 0 0 0 auto;
+}
+@media (max-width: 1200px) {
+  .profile-identity {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .profile-identity-actions {
+    margin-left: auto;
+  }
+  .profile-project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-info-card {
+    min-height: 0;
+  }
+}
+@media (max-width: 760px) {
+  .profile-identity {
+    padding: 20px;
+    gap: 15px;
+  }
+  .profile-guide {
+    width: 66px;
+    height: 80px;
+  }
+  .profile-identity-copy h1 {
+    font-size: 25px;
+  }
+  .profile-identity-copy > p {
+    font-size: 12px;
+  }
+  .profile-identity-actions {
+    width: 100%;
+    margin: 0;
+  }
+  .profile-identity-actions button {
+    flex: 1;
+  }
+  .profile-identity-copy {
+    flex-basis: calc(100% - 85px);
+  }
+  .profile-pills > span {
+    font-size: 10px;
+  }
+  .profile-project-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-info-card,
+  .profile-project-card {
+    padding: 20px;
+  }
+  .profile-projects-heading h2 {
+    font-size: 20px;
+  }
+  .profile-no-projects {
+    flex-wrap: wrap;
+  }
+  .profile-no-projects .tp-detail-button {
+    width: 100%;
+    margin: 0;
+  }
+}
+.brand-mark {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 11px;
+}
+.brand-mark-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+}
+.brand-mark {
+  margin: 0;
+  transform: none;
+  background: transparent;
+}
