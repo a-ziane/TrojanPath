@@ -284,6 +284,11 @@ export function HappeningNow({
           </button>
         </p>
       )}
+      {Object.values(profile.campusEvents || {}).some((e) => e.going) && (
+        <NavLink to="/plan" className="text-sm underline">
+          View events in your weekly plan →
+        </NavLink>
+      )}
       <label className="campus-event-search">
         Search events
         <input

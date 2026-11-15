@@ -227,7 +227,7 @@ export function setTask(
   const next = { ...state, plans };
   return status === "completed" && found
     ? award(next, `task:${id}`, found.xp)
-    : next;
+    : { ...next, xp: next.xp.filter((e) => e.key !== `task:${id}`) };
 }
 export function saveProject(state: AppState, input: Project) {
   const project = projectSchema.parse(input);
@@ -237,6 +237,11 @@ export function saveProject(state: AppState, input: Project) {
   };
   if (project.completed)
     next = award(next, `project:${project.id}`, XP.project);
+  else
+    next = {
+      ...next,
+      xp: next.xp.filter((e) => e.key !== `project:${project.id}`),
+    };
   return next;
 }
 export function saveCheckin(state: AppState, input: Checkin) {

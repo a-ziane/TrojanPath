@@ -24,6 +24,12 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    readFileSync(
+      "supabase/migrations/20261115180604_reversible_completion_xp.sql",
+      "utf8",
+    ),
+  );
   await db.exec(readFileSync("supabase/seed.sql", "utf8"));
   await db.query("insert into auth.users(id) values($1),($2)", [a, b]);
   await db.exec("set role authenticated");
@@ -187,4 +193,68 @@ it("upgrades only untouched starter plans atomically and preserves completed wor
     (await db.query("select id from public.tasks where status='completed'"))
       .rows,
   ).toHaveLength(1);
+});
+
+it("deducts completion XP atomically and restores only one award when rechecked", async () => {
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [a]);
+  const task = (
+    await db.query<{ id: string; xp: number }>(
+      "select id,xp from public.tasks where status='completed' limit 1",
+    )
+  ).rows[0];
+  const initial = (
+    await db.query<{ n: number }>(
+      "select sum(amount)::int as n from public.xp_events",
+    )
+  ).rows[0].n;
+  await db.query("update public.tasks set status='suggested' where id=$1", [
+    task.id,
+  ]);
+  expect(
+    (
+      await db.query<{ n: number }>(
+        "select sum(amount)::int as n from public.xp_events",
+      )
+    ).rows[0].n,
+  ).toBe(initial - task.xp);
+  await db.query("update public.tasks set status='completed' where id=$1", [
+    task.id,
+  ]);
+  await db.query("update public.tasks set status='completed' where id=$1", [
+    task.id,
+  ]);
+  expect(
+    (
+      await db.query<{ n: number }>(
+        "select sum(amount)::int as n from public.xp_events",
+      )
+    ).rows[0].n,
+  ).toBe(initial);
+  const project = (
+    await db.query<{ id: string; data: Record<string, unknown> }>(
+      "select id,data from public.projects limit 1",
+    )
+  ).rows[0];
+  await db.query("update public.projects set data=$1 where id=$2", [
+    JSON.stringify({ ...project.data, completed: false }),
+    project.id,
+  ]);
+  expect(
+    (
+      await db.query<{ n: number }>(
+        "select sum(amount)::int as n from public.xp_events",
+      )
+    ).rows[0].n,
+  ).toBe(initial - 100);
+  await db.query("update public.projects set data=$1 where id=$2", [
+    JSON.stringify({ ...project.data, completed: true }),
+    project.id,
+  ]);
+  expect(
+    (
+      await db.query<{ n: number }>(
+        "select sum(amount)::int as n from public.xp_events",
+      )
+    ).rows[0].n,
+  ).toBe(initial);
 });

@@ -1,3 +1,4 @@
+import { PlannedEvents } from "./teammate/PlannedEvents";
 import { HappeningNow } from "./teammate/HappeningNow";
 import {
   exampleProject,
@@ -814,8 +815,10 @@ export default function App() {
         }
       },
       status === "completed"
-        ? `Task complete! ${t.xp} XP awarded once.`
-        : "Quest updated.",
+        ? `Task complete! ${t.xp} XP added.`
+        : t.status === "completed"
+          ? `Completion undone. ${t.xp} XP removed.`
+          : "Task updated.",
     );
   }
   async function replace(t: Task) {
@@ -1105,6 +1108,25 @@ export default function App() {
                     busy={busy}
                     onTask={changeTask}
                     onReplace={replace}
+                    onRemoveEvent={(id) =>
+                      void run(async () => {
+                        const event = profile.campusEvents?.[id];
+                        if (!event) return;
+                        const next = {
+                          ...profile,
+                          campusEvents: {
+                            ...profile.campusEvents,
+                            [id]: { ...event, going: false },
+                          },
+                        };
+                        if (mode === "demo")
+                          commit({ ...state, profile: next });
+                        else {
+                          await repo.liveProfile(next);
+                          await refresh();
+                        }
+                      })
+                    }
                     onCheckin={() => setModal("checkin")}
                     onGenerate={() =>
                       void run(async () => {
@@ -1421,6 +1443,7 @@ function WeeklyPlan({
   onCheckin,
   onGenerate,
   onFallback,
+  onRemoveEvent,
   xp,
   projects,
 }: {
@@ -1433,6 +1456,7 @@ function WeeklyPlan({
   onCheckin: () => void;
   onGenerate: () => void;
   onFallback: () => void;
+  onRemoveEvent: (id: string) => void;
   xp: number;
   projects: number;
 }) {
@@ -1456,6 +1480,7 @@ function WeeklyPlan({
         completed={complete}
         total={selected?.tasks.length || 0}
       />
+      <PlannedEvents profile={profile} busy={busy} onRemove={onRemoveEvent} />
       {selected ? (
         <>
           <label className="tp-week-selector">

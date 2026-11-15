@@ -8,13 +8,13 @@ const THEME_COLORS: Record<Theme, string> = {
   dark: "#141111",
 };
 
-/** Saved choice wins; new visitors start in dark mode. */
+/** Saved choice wins; new visitors start in light mode. */
 export function resolveTheme(
   stored: string | null,
   _prefersDark: boolean,
 ): Theme {
   if (stored === "light" || stored === "dark") return stored;
-  return "dark";
+  return "light";
 }
 
 function readStored(): string | null {
@@ -64,6 +64,10 @@ function subscribe(listener: () => void) {
 }
 
 export function useTheme(): [Theme, () => void] {
-  const theme = useSyncExternalStore(subscribe, current, () => "dark" as Theme);
+  const theme = useSyncExternalStore(
+    subscribe,
+    current,
+    () => "light" as Theme,
+  );
   return [theme, () => setTheme(theme === "dark" ? "light" : "dark")];
 }
