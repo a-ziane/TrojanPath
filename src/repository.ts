@@ -1,3 +1,4 @@
+import { planningError } from "./planningErrors";
 import { withDemoHackSC } from "../shared/demoTasks";
 import { supabase } from "./supabase";
 import {
@@ -153,9 +154,7 @@ export async function liveGenerate(
     signal: AbortSignal.timeout(30000),
   });
   if (error)
-    throw new Error(
-      "Planning request failed. Your saved plan is safe. Please retry.",
-    );
+    throw new Error(await planningError(error, window.location.origin));
   if (data?.error) throw new Error(data.error);
 }
 export async function liveSaveFallback(plan: Plan) {

@@ -72,3 +72,7 @@ Integration follow-up: rebased Portfolio onto the contributor’s light/dark-mod
 - An authorized temporary authenticated test account saved a starter plan, called the hosted generation endpoint, received HTTP 200/source `gemini`, and read back one Gemini plan with three generated tasks. Signed out globally after verification. Removed the temporary account after approval and verified zero remaining test accounts, plans, tasks, or sessions.
 - Atomic starter upgrade is owner-scoped and refuses plans with changed task status/reflections; database regression checks cover rollback on invalid plans and preservation of completed work. Existing Gemini plans remain idempotent.
 - Default theme is dark; saved light choices remain supported by the existing toggle. Build, Edge Function type checks, and all 31 tests pass.
+
+## Production alias and Safari verification
+
+The user's Safari tab was on `https://trojanpath-a-zianes-projects.vercel.app`, which was absent from the exact origin allowlist. Added that production alias and redeployed generate-plan v8, skill-context v3, and upload-file v4. Verified generation directly through the Vercel UI with a temporary account, then successfully upgraded the user's untouched starter plan in their Safari tab. The page displays three personalized tasks and “Generated with Gemini.” Error reporting now preserves server messages and distinguishes authentication failures from browser connection failures.

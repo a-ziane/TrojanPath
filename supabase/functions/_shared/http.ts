@@ -6,6 +6,7 @@ export function headers(req: Request) {
     "http://127.0.0.1:5173",
     "https://a-ziane.github.io",
     "https://trojanpath.vercel.app",
+    "https://trojanpath-a-zianes-projects.vercel.app",
     ...(Deno.env.get("ALLOWED_ORIGINS") || "").split(",").map((s) => s.trim()),
   ];
   return {

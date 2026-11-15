@@ -18,3 +18,13 @@ it("allows the production website even with an older environment allowlist", () 
     )["Access-Control-Allow-Origin"],
   ).toBe("null");
 });
+
+it("allows the project's production alias used by Safari", () => {
+  vi.stubGlobal("Deno", { env: { get: () => undefined } });
+  const origin = "https://trojanpath-a-zianes-projects.vercel.app";
+  expect(
+    headers(
+      new Request("https://example.com", { headers: { Origin: origin } }),
+    )["Access-Control-Allow-Origin"],
+  ).toBe(origin);
+});
