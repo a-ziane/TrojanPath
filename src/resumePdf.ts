@@ -1,7 +1,11 @@
 import { formatResume } from "./resumeFormat";
 
 /** Harvard-style, text-based PDF; résumé data stays on the student's device. */
-export async function downloadResumePDF(name: string, text: string) {
+export async function downloadResumePDF(
+  name: string,
+  text: string,
+  options?: { title: string; suffix: string },
+) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const margin = 54,
@@ -9,7 +13,10 @@ export async function downloadResumePDF(name: string, text: string) {
     lineHeight = 14;
   let y = 58;
   const resume = formatResume(text, name);
-  doc.setProperties({ title: `${name} — Résumé`, author: name });
+  doc.setProperties({
+    title: `${name} — ${options?.title || "Résumé"}`,
+    author: name,
+  });
   function room(height: number) {
     if (y + height > 738) {
       doc.addPage();
@@ -52,6 +59,6 @@ export async function downloadResumePDF(name: string, text: string) {
     }
   }
   doc.save(
-    `${name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "TrojanPath"}-resume.pdf`,
+    `${name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "TrojanPath"}-${options?.suffix || "resume"}.pdf`,
   );
 }

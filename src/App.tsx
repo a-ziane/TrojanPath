@@ -1,3 +1,5 @@
+import { profileSummary } from "./profileSummary";
+import { downloadResumePDF } from "./resumePdf";
 import { GraduationField } from "./teammate/GraduationField";
 import { PortfolioPage } from "./teammate/PortfolioPage";
 import { BrandMark } from "./BrandMark";
@@ -1719,6 +1721,25 @@ function ProfilePage({
   onPost: (p: Project) => void;
 }) {
   const [fileError, setFileError] = useState("");
+  const [downloadingSummary, setDownloadingSummary] = useState(false);
+  async function downloadSummary() {
+    setDownloadingSummary(true);
+    setFileError("");
+    try {
+      await downloadResumePDF(p.name, profileSummary(p, state), {
+        title: "Advisor profile summary",
+        suffix: "advisor-summary",
+      });
+    } catch (error) {
+      setFileError(
+        error instanceof Error
+          ? error.message
+          : "Could not download your summary. Please retry.",
+      );
+    } finally {
+      setDownloadingSummary(false);
+    }
+  }
   const openFile = (path: string) =>
     void repo
       .fileURL(path)
@@ -1749,6 +1770,16 @@ function ProfilePage({
           </div>
         </div>
         <div className="profile-identity-actions">
+          <PathButton
+            variant="secondary"
+            disabled={downloadingSummary}
+            onClick={() => void downloadSummary()}
+          >
+            <FileText size={16} />
+            {downloadingSummary
+              ? "Preparing summary…"
+              : "Download profile summary"}
+          </PathButton>
           <PathButton variant="secondary" onClick={onEdit}>
             <Pencil size={15} />
             Edit profile
