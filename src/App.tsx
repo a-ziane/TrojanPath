@@ -1,4 +1,4 @@
-import { PlannedEvents } from "./teammate/PlannedEvents";
+import { syncDemoEventTasks } from "./eventTasks";
 import { HappeningNow } from "./teammate/HappeningNow";
 import {
   exampleProject,
@@ -1108,25 +1108,6 @@ export default function App() {
                     busy={busy}
                     onTask={changeTask}
                     onReplace={replace}
-                    onRemoveEvent={(id) =>
-                      void run(async () => {
-                        const event = profile.campusEvents?.[id];
-                        if (!event) return;
-                        const next = {
-                          ...profile,
-                          campusEvents: {
-                            ...profile.campusEvents,
-                            [id]: { ...event, going: false },
-                          },
-                        };
-                        if (mode === "demo")
-                          commit({ ...state, profile: next });
-                        else {
-                          await repo.liveProfile(next);
-                          await refresh();
-                        }
-                      })
-                    }
                     onCheckin={() => setModal("checkin")}
                     onGenerate={() =>
                       void run(async () => {
@@ -1258,13 +1239,28 @@ export default function App() {
                 element={
                   <HappeningNow
                     profile={profile}
+                    plannedIds={state.plans
+                      .flatMap((p) => p.tasks)
+                      .flatMap((t) => (t.eventId ? [t.eventId] : []))}
                     mode={mode}
-                    onSave={async (next) => {
+                    onSave={async (next, eventId) => {
                       const validated = profileSchema.parse(next);
                       if (mode === "demo")
-                        commit({ ...state, profile: validated });
+                        commit(syncDemoEventTasks(state, validated));
                       else {
-                        await repo.liveProfile(validated);
+                        const { error } = await supabase!.functions.invoke(
+                          "plan-campus-event",
+                          {
+                            body: {
+                              eventId,
+                              going: validated.campusEvents?.[eventId]?.going,
+                            },
+                          },
+                        );
+                        if (error)
+                          throw new Error(
+                            "Could not add the event task. Please retry.",
+                          );
                         await refresh();
                       }
                     }}
@@ -1443,7 +1439,6 @@ function WeeklyPlan({
   onCheckin,
   onGenerate,
   onFallback,
-  onRemoveEvent,
   xp,
   projects,
 }: {
@@ -1456,7 +1451,6 @@ function WeeklyPlan({
   onCheckin: () => void;
   onGenerate: () => void;
   onFallback: () => void;
-  onRemoveEvent: (id: string) => void;
   xp: number;
   projects: number;
 }) {
@@ -1480,7 +1474,6 @@ function WeeklyPlan({
         completed={complete}
         total={selected?.tasks.length || 0}
       />
-      <PlannedEvents profile={profile} busy={busy} onRemove={onRemoveEvent} />
       {selected ? (
         <>
           <label className="tp-week-selector">

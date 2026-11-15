@@ -25,19 +25,19 @@ type Feed = {
 export function HappeningNow({
   profile,
   mode,
+  plannedIds,
   onSave,
 }: {
   profile: Profile;
+  plannedIds: string[];
   mode: "demo" | "live";
-  onSave: (profile: Profile) => Promise<void>;
+  onSave: (profile: Profile, eventId: string) => Promise<void>;
 }) {
   const [feed, setFeed] = useState<Feed | null>(null),
     [error, setError] = useState(""),
     [saving, setSaving] = useState(false),
     [query, setQuery] = useState(""),
-    [refresh, setRefresh] = useState(0),
-    [editing, setEditing] = useState(""),
-    [note, setNote] = useState("");
+    [refresh, setRefresh] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
@@ -86,42 +86,37 @@ export function HappeningNow({
   const matches = matchEvents(events, terms, 2),
     matchedIds = new Set(matches.map((e) => e.id));
   const more = events.filter((e) => !matchedIds.has(e.id)).slice(0, 9);
-  async function save(ev: CampusEvent, attended = false) {
+  async function save(ev: CampusEvent) {
     const previous = profile.campusEvents?.[ev.id];
     setSaving(true);
     setError("");
     try {
-      await onSave({
-        ...profile,
-        campusEvents: {
-          ...profile.campusEvents,
-          [ev.id]: {
-            title: ev.title,
-            url: ev.url,
-            startsOn: ev.startsOn,
-            going: attended || !previous?.going,
-            attended: attended || !!previous?.attended,
-            note: attended ? note.trim() : previous?.note || "",
+      await onSave(
+        {
+          ...profile,
+          campusEvents: {
+            ...profile.campusEvents,
+            [ev.id]: {
+              title: ev.title,
+              url: ev.url,
+              startsOn: ev.startsOn,
+              endsOn: ev.endsOn,
+              going: !previous?.going || !plannedIds.includes(ev.id),
+              attended: !!previous?.attended,
+              note: previous?.note || "",
+            },
           },
         },
-      });
-      if (attended) {
-        setEditing("");
-        setNote("");
-      }
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Could not save this event. Please retry.",
+        ev.id,
       );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save event task.");
     } finally {
       setSaving(false);
     }
   }
   function card(ev: CampusEvent | MatchedEvent, matched = false) {
     const log = profile.campusEvents?.[ev.id];
-    const started = !!ev.startsOn && Date.parse(ev.startsOn) <= Date.now();
     const when =
       ev.startsOn && Number.isFinite(Date.parse(ev.startsOn))
         ? new Date(ev.startsOn).toLocaleString("en-US", {
@@ -185,67 +180,19 @@ export function HappeningNow({
                 disabled={saving}
                 onClick={() => void save(ev)}
               >
-                {log?.going ? "Going" : "I’m going"}
+                {log?.going && plannedIds.includes(ev.id)
+                  ? "Going"
+                  : "I’m going"}
               </Button>
-              <Button
-                variant="secondary"
-                disabled={saving || !started}
-                title={
-                  started
-                    ? "Log what you learned"
-                    : "Available after the event starts"
-                }
-                onClick={() => {
-                  setEditing(ev.id);
-                  setNote("");
-                }}
-              >
-                I went
-              </Button>
+              {log?.going && plannedIds.includes(ev.id) && (
+                <NavLink to="/plan">View task →</NavLink>
+              )}
             </>
           )}
           <a href={ev.url} target="_blank" rel="noreferrer">
             View event ↗
           </a>
         </div>
-        {editing === ev.id && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void save(ev, true);
-            }}
-            className="campus-event-note"
-          >
-            <label>
-              What did you take away from this event?
-              <textarea
-                aria-label={`Reflection for ${ev.title}`}
-                value={note}
-                maxLength={1500}
-                minLength={15}
-                required
-                rows={3}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </label>
-            <small>
-              Saved as self-reported attendance. Review the suggested résumé
-              line and LinkedIn draft in Portfolio.
-            </small>
-            <div className="flex gap-2">
-              <Button disabled={saving || note.trim().length < 15}>
-                Save reflection
-              </Button>
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={() => setEditing("")}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        )}
       </article>
     );
   }

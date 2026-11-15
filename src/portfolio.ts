@@ -24,7 +24,7 @@ export function completedActivities(state: AppState): PortfolioActivity[] {
     }));
   const tasks = state.plans
     .flatMap((p) => p.tasks)
-    .filter((t) => t.status === "completed")
+    .filter((t) => t.status === "completed" && !t.eventId)
     .map((t) => ({
       id: `task:${t.id}`,
       kind: /hackathon|event|attend|conference|workshop|meetup|seminar/i.test(

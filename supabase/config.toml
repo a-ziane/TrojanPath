@@ -7,3 +7,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.campus-events]
 verify_jwt = false
+[functions.plan-campus-event]
+verify_jwt = false

@@ -92,3 +92,11 @@ The user's Safari tab was on `https://trojanpath-a-zianes-projects.vercel.app`, 
 - Browser verified completing a 50-XP task changed the demo from 330 to 380 XP, unchecking returned it to 330, and refresh preserved the result. Unit tests cover repeated unchecks/rechecks and project reversals. Database tests cover atomic deduction/restoration and unchanged direct-XP-write restrictions.
 - Installed the owner-scoped reversible completion reward trigger in the hosted database and confirmed its definition. No direct client XP writes or manual changes to real students' task statuses were used.
 - Fresh isolated browser opened in light mode. Saved dark/light choices and the toggle still work. Production build and all 46 tests pass.
+
+## Real event tasks and end-time enforcement
+
+- Replaced the separate weekly-plan event section with actual task records. Going creates one event task with the normal duration-based XP, contributes to task counts, and survives refresh; repeated Going requests do not duplicate it. Cancelling Going removes an unfinished event task.
+- Task UI disables completion until the official end time, refreshes its clock automatically, and leaves unknown-end events locked. Removed the independent I went action to avoid a second completion path.
+- Live tasks are created through an authenticated Edge Function and owner-scoped atomic RPC. Schedule metadata comes from the USC feed/trusted snapshot using server credentials. Clients cannot update the calendar catalog; the database completion trigger checks that catalog rather than editable task timestamps. Existing starter-plan regeneration cannot delete selected event tasks.
+- Installed the migration and deployed plan-campus-event v2. Anonymous POST returns HTTP 401 with the correct production CORS header. No real student account or plan was modified during verification. Database integration tests verify deduplication, rejection before/without an end time, XP after an eligible past event, XP reversal, and denied client schedule writes. Demo tests verify one Portfolio entry per completed event.
+- Browser verified the chosen event appears in the main task list as Event · 60 min · +40 XP, checkbox disabled until November 24 at 1 PM Pacific, with no separate section. Refresh retains the task and lock. Production build, Edge Function type check, and all 50 tests pass.

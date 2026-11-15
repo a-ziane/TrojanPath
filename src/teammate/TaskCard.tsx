@@ -1,3 +1,4 @@
+import { eventTaskLocked } from "../eventTasks";
 import { HACKSC_TASK_TITLE, HACKSC_URL } from "../../shared/demoTasks";
 import { useEffect, useState } from "react";
 import {
@@ -30,6 +31,13 @@ export function TaskCard({
   const [expanded, setExpanded] = useState(false),
     [reflection, setReflection] = useState(t.reflection);
   useEffect(() => setReflection(t.reflection), [t.reflection]);
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (!t.eventId) return;
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, [t.eventId]);
+  const locked = eventTaskLocked(t, now);
   const done = t.status === "completed";
   return (
     <article
@@ -44,8 +52,8 @@ export function TaskCard({
           className={cx("ref-task-toggle", done && "done")}
           aria-label={`Complete ${t.title}`}
           aria-pressed={done}
-          title="Complete"
-          disabled={busy || t.status === "skipped"}
+          title={locked ? "Available after the event ends" : "Complete"}
+          disabled={busy || t.status === "skipped" || (locked && !done)}
           onClick={() => onStatus(done ? "suggested" : "completed")}
         >
           {done && <Check size={22} />}
@@ -53,15 +61,15 @@ export function TaskCard({
         <div className="min-w-0 flex-1">
           <h3>{t.title}</h3>
           <span className="tp-task-meta">
-            {
-              {
-                projects: "Project",
-                skills: "Skill",
-                exploration: "Explore",
-                research: "Research",
-                networking: "Connect",
-              }[t.category]
-            }{" "}
+            {t.eventId
+              ? "Event"
+              : {
+                  projects: "Project",
+                  skills: "Skill",
+                  exploration: "Explore",
+                  research: "Research",
+                  networking: "Connect",
+                }[t.category]}{" "}
             · <Clock3 size={12} />
             {t.minutes} min
           </span>
@@ -80,6 +88,13 @@ export function TaskCard({
           />
         </button>
       </div>
+      {t.eventId && (
+        <p className="text-xs text-muted px-5 pb-3">
+          {t.eventEndsAt
+            ? `Completion opens after ${new Date(t.eventEndsAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })} Pacific time.`
+            : "Completion stays locked until the official event end time is available."}
+        </p>
+      )}
       {expanded && (
         <div className="tp-task-details">
           <p>{t.instructions}</p>
@@ -90,6 +105,11 @@ export function TaskCard({
             <summary>Why suggested?</summary>
             <p>{t.why}</p>
           </details>
+          {t.eventURL && (
+            <a href={t.eventURL} target="_blank" rel="noreferrer">
+              Official event information ↗
+            </a>
+          )}
           {t.title === HACKSC_TASK_TITLE && (
             <a href={HACKSC_URL} target="_blank" rel="noreferrer">
               HackSC event information ↗
@@ -123,7 +143,7 @@ export function TaskCard({
             </Button>
             {!done && t.status !== "skipped" && (
               <>
-                <button disabled={busy} onClick={onReplace}>
+                <button disabled={busy || !!t.eventId} onClick={onReplace}>
                   Replace
                 </button>
                 <button disabled={busy} onClick={() => onStatus("skipped")}>

@@ -10,7 +10,7 @@ const a = "11111111-1111-4111-8111-111111111111",
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(
-    `create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid,name text,bucket_id text);alter table storage.objects enable row level security;create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;`,
+    `create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid,name text,bucket_id text);alter table storage.objects enable row level security;create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;`,
   );
   await db.exec(
     readFileSync(
@@ -27,6 +27,12 @@ beforeAll(async () => {
   await db.exec(
     readFileSync(
       "supabase/migrations/20261115180604_reversible_completion_xp.sql",
+      "utf8",
+    ),
+  );
+  await db.exec(
+    readFileSync(
+      "supabase/migrations/20261115182430_planned_event_tasks.sql",
       "utf8",
     ),
   );
@@ -257,4 +263,72 @@ it("deducts completion XP atomically and restores only one award when rechecked"
       )
     ).rows[0].n,
   ).toBe(initial);
+});
+
+it("creates one real event task and enforces official end times before awarding XP", async () => {
+  await db.exec("reset role");
+  await db.query(
+    "insert into public.campus_event_catalog(id,title,url,starts_at,ends_at) values('future-test','Future event','https://calendar.usc.edu/event/future',now()+interval '1 day',now()+interval '2 days'),('past-test','Past event','https://calendar.usc.edu/event/past',now()-interval '2 days',now()-interval '1 day'),('unknown-test','Unknown end','https://calendar.usc.edu/event/unknown',now()-interval '1 day',null)",
+  );
+  await db.exec("set role authenticated");
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [a]);
+  await db.query("select public.plan_campus_event('future-test',true)");
+  await db.query("select public.plan_campus_event('future-test',true)");
+  const future = (
+    await db.query<{ id: string }>(
+      "select id from public.tasks where data->>'eventId'='future-test'",
+    )
+  ).rows;
+  expect(future).toHaveLength(1);
+  await expect(
+    db.query("update public.tasks set status='completed' where id=$1", [
+      future[0].id,
+    ]),
+  ).rejects.toThrow("official end time");
+  await db.query("select public.plan_campus_event('unknown-test',true)");
+  await expect(
+    db.query(
+      "update public.tasks set status='completed' where data->>'eventId'='unknown-test'",
+    ),
+  ).rejects.toThrow("official end time");
+  await db.query("select public.plan_campus_event('past-test',true)");
+  const past = (
+    await db.query<{ id: string; xp: number }>(
+      "select id,xp from public.tasks where data->>'eventId'='past-test'",
+    )
+  ).rows[0];
+  await db.query(
+    "update public.tasks set status='completed',reflection='Participated and learned about data.' where id=$1",
+    [past.id],
+  );
+  expect(
+    (
+      await db.query("select * from public.xp_events where event_key=$1", [
+        `task:${past.id}`,
+      ])
+    ).rows,
+  ).toHaveLength(1);
+  await db.query("update public.tasks set status='suggested' where id=$1", [
+    past.id,
+  ]);
+  expect(
+    (
+      await db.query("select * from public.xp_events where event_key=$1", [
+        `task:${past.id}`,
+      ])
+    ).rows,
+  ).toHaveLength(0);
+  await expect(
+    db.query(
+      "update public.campus_event_catalog set ends_at=now()-interval '1 minute' where id='future-test'",
+    ),
+  ).rejects.toThrow();
+  await db.query("select public.plan_campus_event('future-test',false)");
+  expect(
+    (
+      await db.query(
+        "select id from public.tasks where data->>'eventId'='future-test'",
+      )
+    ).rows,
+  ).toHaveLength(0);
 });

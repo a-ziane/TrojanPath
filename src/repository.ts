@@ -1,3 +1,4 @@
+import { syncDemoEventTasks } from "./eventTasks";
 import { planningError } from "./planningErrors";
 import {
   loadJourney,
@@ -18,7 +19,15 @@ import {
 } from "../shared/domain";
 export function loadDemo(): AppState {
   try {
-    return loadJourney().state;
+    const saved = loadJourney().state;
+    if (!saved.profile) return saved;
+    const next = syncDemoEventTasks(saved, saved.profile);
+    if (
+      next.plans.flatMap((p) => p.tasks).length !==
+      saved.plans.flatMap((p) => p.tasks).length
+    )
+      persistJourney(next);
+    return next;
   } catch {
     throw new Error(
       "The saved demo could not be read. Use Reset demo to start again.",

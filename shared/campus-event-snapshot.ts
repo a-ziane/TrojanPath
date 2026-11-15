@@ -23,7 +23,7 @@ export const fallbackEvents: CampusEvent[] = [
     title: "Price Presents: Data Centers at the Crossroads",
     org: "",
     startsOn: "2026-11-24T12:00:00-08:00",
-    endsOn: null,
+    endsOn: "2026-11-24T13:00:00-08:00",
     location: "See event page",
     description:
       "A talk on data centers, the infrastructure behind artificial intelligence and data.",

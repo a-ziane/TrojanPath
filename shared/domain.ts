@@ -60,6 +60,7 @@ export const profileSchema = z.object({
             "Use the official USC calendar event link.",
           ),
         startsOn: z.string().nullable(),
+        endsOn: z.string().nullable().optional(),
         going: z.boolean(),
         attended: z.boolean(),
         note: z.string().max(1500),
@@ -97,6 +98,10 @@ export const taskSpecSchema = z.object({
 });
 export type TaskSpec = z.infer<typeof taskSpecSchema>;
 export type Task = TaskSpec & {
+  eventId?: string;
+  eventStartsAt?: string | null;
+  eventEndsAt?: string | null;
+  eventURL?: string;
   id: string;
   status: "suggested" | "in progress" | "completed" | "skipped";
   xp: number;
@@ -215,6 +220,17 @@ export function setTask(
   status: Task["status"],
   reflection = "",
 ) {
+  const original = state.plans.flatMap((p) => p.tasks).find((t) => t.id === id);
+  if (
+    status === "completed" &&
+    original?.eventId &&
+    (!original.eventEndsAt ||
+      !Number.isFinite(Date.parse(original.eventEndsAt)) ||
+      Date.parse(original.eventEndsAt) > Date.now())
+  )
+    throw new Error(
+      "This event can only be completed after its official end time.",
+    );
   let found: Task | undefined;
   const plans = state.plans.map((p) => ({
     ...p,
@@ -224,7 +240,23 @@ export function setTask(
       return { ...t, status, reflection };
     }),
   }));
-  const next = { ...state, plans };
+  const event =
+    original?.eventId && state.profile?.campusEvents?.[original.eventId];
+  const profile =
+    event && original?.eventId && state.profile
+      ? {
+          ...state.profile,
+          campusEvents: {
+            ...state.profile.campusEvents,
+            [original.eventId]: {
+              ...event,
+              attended: status === "completed",
+              note: reflection.slice(0, 1500),
+            },
+          },
+        }
+      : state.profile;
+  const next = { ...state, plans, profile };
   return status === "completed" && found
     ? award(next, `task:${id}`, found.xp)
     : { ...next, xp: next.xp.filter((e) => e.key !== `task:${id}`) };
@@ -306,6 +338,10 @@ export const appStateSchema = z.object({
       source: z.enum(["demo", "fallback", "gemini"]),
       tasks: z.array(
         taskSpecSchema.extend({
+          eventId: z.string().optional(),
+          eventStartsAt: z.string().nullable().optional(),
+          eventEndsAt: z.string().nullable().optional(),
+          eventURL: z.string().optional(),
           id: z.string().uuid(),
           status: z.enum(["suggested", "in progress", "completed", "skipped"]),
           xp: z.number().int().min(0),
