@@ -1,3 +1,4 @@
+import { PortfolioPage } from "./teammate/PortfolioPage";
 import { BrandMark } from "./BrandMark";
 import { TrojanGuide } from "./teammate/TrojanGuide";
 import { levelFor } from "./teammate/pathway";
@@ -988,7 +989,7 @@ export default function App() {
           mode={mode}
           onProfile={() => setModal("profile")}
           onCheckin={() => setModal("checkin")}
-          onResume={() => navigate("/resume")}
+          onResume={() => navigate("/portfolio")}
           onLogout={() =>
             void run(async () => {
               if (mode === "live") await supabase?.auth.signOut();
@@ -1089,7 +1090,7 @@ export default function App() {
                       setEditing(p || null);
                       setModal("project");
                     }}
-                    onResume={() => navigate("/resume")}
+                    onResume={() => navigate("/portfolio")}
                     onPost={(p) =>
                       setPost(
                         `I recently completed ${p.title}.\n\n${p.description}\n\nThis project gave me an opportunity to work with ${p.skills.join(", ") || "new ideas"}. I’m looking forward to building on what I learned.${p.url ? "\n\n" + p.url : ""}\n\n#StudentProjects #LearningByDoing`,
@@ -1134,25 +1135,27 @@ export default function App() {
                 }
               />
               <Route
-                path="/resume"
+                path="/portfolio"
                 element={
-                  <ResumeEditor
-                    profile={profile}
-                    projects={state.projects}
-                    busy={busy}
-                    onSave={(text) =>
-                      void run(async () => {
-                        const next = { ...profile, resumeDraft: text };
-                        if (mode === "demo")
-                          commit({ ...state, profile: next });
-                        else {
-                          await repo.liveProfile(next);
-                          await refresh();
-                        }
-                      }, "Résumé saved.")
-                    }
+                  <PortfolioPage
+                    state={state}
+                    onSave={async (patch) => {
+                      const next = profileSchema.parse({
+                        ...profile,
+                        ...patch,
+                      });
+                      if (mode === "demo") commit({ ...state, profile: next });
+                      else {
+                        await repo.liveProfile(next);
+                        await refresh();
+                      }
+                    }}
                   />
                 }
+              />
+              <Route
+                path="/resume"
+                element={<Navigate to="/portfolio" replace />}
               />
               <Route path="/resources" element={<Resources />} />
               <Route path="*" element={<Navigate to="/progress" replace />} />
@@ -1756,7 +1759,7 @@ function ProfilePage({
           </PathButton>
           <PathButton variant="secondary" onClick={onResume}>
             <FileText size={16} />
-            Résumé
+            Portfolio
           </PathButton>
         </div>
       </section>
@@ -1908,76 +1911,6 @@ function ProfilePage({
         </div>
       )}
     </div>
-  );
-}
-
-function ResumeEditor({
-  profile,
-  projects,
-  onSave,
-  busy = false,
-}: {
-  profile: Profile;
-  projects: Project[];
-  onSave: (text: string) => void;
-  busy?: boolean;
-}) {
-  const [text, setText] = useState(
-    profile.resumeDraft || resumeText(profile, projects),
-  );
-  const [saved, setSaved] = useState(profile.resumeDraft || "");
-  const paper = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    if (paper.current) {
-      paper.current.style.height = "auto";
-      paper.current.style.height = `${Math.max(880, paper.current.scrollHeight)}px`;
-    }
-  }, [text]);
-  useEffect(() => {
-    setSaved(profile.resumeDraft || "");
-  }, [profile.resumeDraft]);
-  return (
-    <section className="tp-document-editor">
-      <div className="tp-doc-toolbar">
-        <div>
-          <h1>{profile.name} — Résumé</h1>
-          <span>{text === saved ? "Saved" : "Unsaved changes"}</span>
-        </div>
-        <div className="flex gap-2">
-          <PathButton
-            variant="secondary"
-            className="px-3 py-2 text-[13px]"
-            disabled={busy}
-            onClick={() => onSave(text)}
-          >
-            Save
-          </PathButton>
-          <PathButton
-            className="px-3 py-2 text-[13px]"
-            onClick={() => window.print()}
-          >
-            Export PDF
-          </PathButton>
-        </div>
-      </div>
-      <div className="tp-doc-ruler" aria-hidden="true">
-        1 · · · · 2 · · · · 3 · · · · 4 · · · · 5 · · · · 6
-      </div>
-      <div className="tp-doc-canvas">
-        <textarea
-          ref={paper}
-          aria-label="Editable résumé document"
-          spellCheck
-          className="tp-doc-paper"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          maxLength={4000}
-        />
-      </div>
-      <div className="print-material">
-        <pre>{text}</pre>
-      </div>
-    </section>
   );
 }
 

@@ -53,3 +53,15 @@ Remaining external steps: Configure Auth Site URL/redirect URLs and email delive
 - Demo plans include an optional 60-minute “Attend HackSC hackathon” participation block linking to the official HackSC site. Saved demos upgrade only an untouched, unawarded suggestion of at least 60 minutes. Completed/reflected work is protected, total planned time never increases, and live fallback plans are unchanged.
 - Browser: profile banner and three info cards render as requested; existing project card/actions remain. Reloaded demo shows HackSC in its saved weekly plan with 40 XP and the original 120-minute plan budget intact.
 - Production build / TypeScript and all 19 tests pass. Deno checks for the planning function pass with the new shared demo helper.
+
+## Portfolio suggestions, résumé download, and LinkedIn drafts
+
+- `/portfolio` replaces résumé navigation; `/resume` remains a redirect. Shared horse logo verified loaded in the top-corner header.
+- Build / TypeScript and 23 tests pass. Tests cover completed-only sources, evidence rather than instructions, edited additions, duplicate prevention, size limits, saved review states/posts, and factual event/project drafts.
+- Isolated browser demo: complete model/Python/HackSC tasks; accept model suggestion; edit and accept Python suggestion; dismiss HackSC without adding it; verify saved document and decisions survive reload; restore dismissed suggestion.
+- LinkedIn: choose HackSC event, edit draft, save, reload, select same activity, and verify the edited text persists.
+- Direct PDF: Download résumé produced `Zahi-resume.pdf`, recognized as a valid one-page PDF 1.3 file. Current document text is exported locally without sending it to an API.
+- Responsive: 1280px and 390px document widths match scroll widths (no horizontal overflow).
+- Live persistence uses the existing profile JSON/RLS path. This update’s browser mutations were isolated demo data; a new hosted-account session was not created.
+
+Integration follow-up: rebased Portfolio onto the contributor’s light/dark-mode update (`320f820`), preserving the theme toggle and theme initialization. Portfolio panels, controls, text, borders, and the sticky logo header now use the shared theme tokens; the résumé paper remains white for PDF preview. Combined production build and all 25 tests pass.

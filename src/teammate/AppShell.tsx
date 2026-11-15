@@ -107,9 +107,9 @@ export function AppShell({
               </button>
               <div className="ref-extra-links">
                 <NavLink to="/checkins">Past check-ins</NavLink>
-                <NavLink to="/resume">
+                <NavLink to="/portfolio">
                   <FileText size={16} />
-                  Résumé
+                  Portfolio
                 </NavLink>
               </div>
             </>

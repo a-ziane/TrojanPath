@@ -136,3 +136,11 @@ The original Next.js/Zustand demo was adapted to the existing Vite app, keeping 
 - Deploy `skill-context` alongside `generate-plan` and `upload-file`; all keep the Gemini secret on the server. Skill questions share the existing per-user AI request limit. No database migration or additional API key is required.
 
 The latest screenshot-inspired design uses **Weekly Plan** and **Path**, a physical career ladder, earned badges, completion rings, ranking podiums, and mobile bottom navigation. Milestone floors reflect participation XP; they are not employment titles or promised promotions. The guide stays on the ladder instead of following an outdoor trail into the sky.
+
+## Portfolio
+
+`/portfolio` replaces the résumé page (`/resume` redirects). Completed tasks, events, and completed projects create editable, factual résumé suggestions from their saved titles, reflections, descriptions, and skills. Planned instructions are never presented as accomplishments. Accept or Save & accept updates and saves the current résumé; Dismiss does not add anything. Reviewed decisions persist, and dismissed items can be restored. The document remains directly editable, with a 4,000-character limit and direct PDF download through a lazily loaded jsPDF module.
+
+The side panel drafts editable LinkedIn posts for completed activities. Edited drafts can be saved and copied; nothing is published automatically. Suggestions and posts are assembled from confirmed saved activity details, with no additional API calls or new credentials. Portfolio decisions and post drafts live in the existing owner-protected profile JSON.
+
+The supplied horse logo is the shared header/sign-in/favicon mark. Asset URLs include a cache version so the older TP mark is replaced on refresh.

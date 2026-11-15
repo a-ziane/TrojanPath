@@ -41,6 +41,18 @@ export const profileSchema = z.object({
   displayName: z.string().max(40),
   resumePath: text.optional(),
   resumeDraft: text.optional(),
+  portfolioReview: z
+    .record(
+      z.string().max(150),
+      z.object({
+        status: z.enum(["accepted", "dismissed"]),
+        text: z.string().max(1500),
+      }),
+    )
+    .optional(),
+  portfolioPosts: z
+    .record(z.string().max(150), z.string().max(5000))
+    .optional(),
 });
 export type Profile = z.infer<typeof profileSchema>;
 export const taskSpecSchema = z.object({
