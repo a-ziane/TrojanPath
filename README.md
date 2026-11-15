@@ -81,6 +81,20 @@ Vitest covers the main completion → project → XP → check-in → reduced-pl
 
 Browser verification checks onboarding, completing a quest, attaching a project, avatar/XP advancement, feedback-driven reduction from 210 to 120 minutes, refresh persistence, and page navigation. A 390px viewport check verifies compact navigation and no horizontal overflow. Production build and GitHub Pages base-path checks should be repeated after deployment configuration changes.
 
+## Vercel
+
+The frontend is ready to import into Vercel. `vercel.json` selects **Vite**, installs with **npm ci**, builds with **npm run build**, and publishes **dist**. Its build command explicitly sets `VITE_BASE_PATH=/` so a GitHub Pages base-path setting cannot break Vercel assets. Node **24.x** is pinned in `package.json`. Hash routes such as `/#/plan` work without a catch-all rewrite.
+
+1. In Vercel, choose **Add New → Project** and import `a-ziane/TrojanPath`. Use repository root `./`, Vite, and production branch `main`. The checked-in configuration supplies the build/output settings.
+2. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from your Supabase project to the **Production** environment. This project’s public URL is `https://iqvsqomldbqrzpekmujp.supabase.co`; the publishable key is available in Supabase’s API settings. Do not upload `.env.local`. For Preview, prefer a separate Supabase project and its corresponding public values; the same live project will share accounts and data across deployments if you deliberately use it for both.
+3. Deploy. After Vercel assigns the real URL, add that exact origin (without a trailing slash or route) to the existing comma-separated `ALLOWED_ORIGINS` secret in Supabase Edge Function Secrets. Preserve origins you still use. For example, add `https://YOUR_ACTUAL_PROJECT.vercel.app`; replace that placeholder with the deployment’s actual domain. Do not allow every `*.vercel.app` domain. Explicitly add any preview origin you intend to test.
+4. In Supabase **Authentication → URL Configuration**, set the **Site URL** to the production URL and add its root URL to **Redirect URLs**. Add explicit preview/local URLs only where needed. This lets email confirmation return to the app.
+5. Test a real account: sign in, save a profile, generate a plan labeled **Gemini**, upload a project, and refresh. If plans or uploads fail only on the Vercel URL, check the origin allowlist first. Updating a Vercel build-time variable requires a new deployment.
+
+Gemini and Supabase service credentials stay in **Supabase**, not Vercel. The hosted Edge Functions are already deployed separately; Vercel hosts the static frontend. `.vercelignore` excludes local environment files and backend files from CLI deployment uploads, and `.vercel/` is Git-ignored. A frontend deployment does not run database migrations or redeploy Edge Functions.
+
+For a local equivalent of the Vercel build, run `VITE_BASE_PATH=/ npm run build`. The app still has an explicitly separate demo entry point if you want to inspect the interface without an account.
+
 ## GitHub Pages
 
 `.github/workflows/pages.yml` builds, tests, and deploys `dist/` on pushes to `main` or manual dispatch. In GitHub, set **Settings → Pages → Source: GitHub Actions** and define repository variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Only these public values enter the build; Gemini remains in Supabase.
