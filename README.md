@@ -124,3 +124,13 @@ A local Gemini key belongs in `supabase/functions/.env` (copy the adjacent `.env
 The main interface adapts [zahitisani3-rgb/ncojoc](https://github.com/zahitisani3-rgb/ncojoc) at commit `6b7ea848f274ad0f5da32f9da7a6b587d736e703`: the TP identity, cardinal/gold palette, DM Sans / Space Grotesk typography, sidebar, mountain trail, shared UI components, and quest card layout. Ported components live in `src/teammate/`.
 
 The original Next.js/Zustand demo was adapted to the existing Vite app, keeping the live Supabase/Gemini integration and saved records. Pathway progression comes from earned XP; quests retain accept, replace, skip, completion, resources, and reflection. Check-ins and résumé editing open from the sidebar. Profile/project uploads and USC resources remain available. The leaderboard uses the existing opt-in database function in live mode; demo rankings remain explicitly fictional. No new API keys or database migrations are needed for this interface update. Existing Vercel settings remain valid.
+
+## Focused dashboard and onboarding update
+
+- Onboarding now advances one question at a time, with Back/Continue, optional steps, dynamic skill follow-ups, current projects with links, a private résumé upload, and editable weekly hours. Editing an existing profile remains a single form.
+- New skills in live mode request a short contextual Gemini question through the authenticated `skill-context` Edge Function. Demo mode uses a clearly local prompt. Saved answers are profile data and limited excerpts inform later AI planning. If AI is unavailable or rate-limited, the question remains answerable without AI.
+- The Pathway combines the mountain roadmap and compact task tracker. Active includes both older `suggested` and `in progress` records. Complete toggles completion; reopening does not revoke XP, and re-completing never awards duplicate XP. Details, reasons, evidence, replace, and skip live behind expandable controls.
+- `/checkins` contains saved weekly reflections and factual, automatically assembled recaps. New check-ins snapshot confirmed task completions so later task edits do not rewrite the recap.
+- `/resume` is a paper-style document editor with explicit Save, unsaved-change status, and PDF export through the browser’s print dialog.
+- The original vector Trojan guide, mountain scenery, milestone stars/flags, and compact XP meter provide the game styling without external graphics dependencies.
+- Deploy `skill-context` alongside `generate-plan` and `upload-file`; all keep the Gemini secret on the server. Skill questions share the existing per-user AI request limit. No database migration or additional API key is required.

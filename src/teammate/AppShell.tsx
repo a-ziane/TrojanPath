@@ -47,12 +47,22 @@ export function AppShell({
               {label}
             </NavLink>
           ))}
-          <button className="tp-nav" onClick={onCheckin} disabled={!p}>
-            <span aria-hidden>●</span>Check-in
-          </button>
-          <button className="tp-nav" onClick={onResume} disabled={!p}>
+          <NavLink
+            to="/checkins"
+            className={({ isActive }) =>
+              `tp-nav ${isActive ? "tp-active" : ""}`
+            }
+          >
+            <span aria-hidden>●</span>Check-ins
+          </NavLink>
+          <NavLink
+            to="/resume"
+            className={({ isActive }) =>
+              `tp-nav ${isActive ? "tp-active" : ""}`
+            }
+          >
             <span aria-hidden>●</span>Resume
-          </button>
+          </NavLink>
           {links.slice(2).map(([url, label]) => (
             <NavLink
               key={url}
@@ -65,45 +75,13 @@ export function AppShell({
               {label}
             </NavLink>
           ))}
-          <span className="tp-nav text-muted">
-            <span aria-hidden>●</span>Connect{" "}
-            <small className="ml-auto text-[10px]">Coming soon</small>
-          </span>
         </nav>
-        <div className="rounded-[20px] bg-cardinal p-5 text-white">
-          <PathDoodle />
-          <h2 className="mt-3 font-display text-[20px] font-bold text-white">
-            Your pace. Your path.
-          </h2>
-          <p className="mt-2 text-[13px] text-white/80">
-            You don’t need it all figured out. Just a next step that fits you.
-          </p>
-        </div>
-        <button
-          onClick={onCheckin}
-          disabled={!p}
-          className="my-4 flex gap-3 rounded-[16px] bg-gold-soft p-4 text-left"
-        >
-          <CalendarDays className="shrink-0 text-cardinal" size={21} />
-          <span>
-            <strong className="text-[14px]">Your weekly check-in</strong>
-            <span className="mt-1 block text-[12px] text-muted">
-              Suggested Sundays · Open all week
-            </span>
-          </span>
-        </button>
         <div className="mt-auto border-t border-border pt-5">
           <button
             className="flex w-full items-center gap-3 text-left"
             onClick={onProfile}
           >
-            <Avatar
-              initials={(p?.name ?? "TP")
-                .split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("")}
-            />
+            <Avatar outfit={p?.avatar} />
             <span className="min-w-0">
               <strong className="block truncate text-[14px]">
                 {p?.name || "Your profile"}

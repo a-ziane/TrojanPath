@@ -1,8 +1,8 @@
+import { TrojanGuide } from "./TrojanGuide";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Flag, Star } from "lucide-react";
 import type { Pathway, Theme } from "./pathway";
-import { levelFor } from "./pathway";
-import { Progress, cx } from "./ui";
+import { cx } from "./ui";
 
 // Scene coordinates match the Figma "Climb" frame (640 x 699).
 const W = 640;
@@ -86,26 +86,24 @@ function trailPath(pts: [number, number][]): string {
   return d;
 }
 
-const TRAIL = trailPath(POINTS);
 const ease = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 export function ClimbCard({
   pathway,
-  initials,
-  xp,
+  outfit = "cardinal",
 }: {
   pathway: Pathway;
-  initials: string;
-  xp: number;
+  outfit?: "cardinal" | "gold" | "sage";
 }) {
   const theme = THEMES[pathway.theme] ?? THEMES.software;
   const stages = pathway.stages.slice(0, POINTS.length);
+  const points = POINTS.slice(0, stages.length);
+  const trail = trailPath(points);
   const currentIdx = Math.max(
     0,
     stages.findIndex((s) => s.status === "current"),
   );
-  const level = levelFor(xp);
 
   // ---- Fit the fixed-size scene into the card.
   const cardRef = useRef<HTMLDivElement>(null);
@@ -130,9 +128,9 @@ export function ClimbCard({
     const p = pathRef.current;
     if (!p) return;
     const total = p.getTotalLength();
-    const out = POINTS.map(([x, y], i) => {
+    const out = points.map(([x, y], i) => {
       if (i === 0) return 0;
-      if (i === POINTS.length - 1) return total;
+      if (i === points.length - 1) return total;
       let best = 0;
       let bestD = Infinity;
       for (let l = 0; l <= total; l += 1) {
@@ -146,7 +144,7 @@ export function ClimbCard({
       return best;
     });
     setLengths(out);
-  }, []);
+  }, [stages.length]);
 
   // ---- Animate the avatar (and the solid trail) to the current stage.
   const distRef = useRef(0);
@@ -199,11 +197,39 @@ export function ClimbCard({
   return (
     <div
       ref={cardRef}
-      className="tp-climb relative h-[699px] min-h-[600px] w-full overflow-hidden rounded-[24px] border border-border transition-[background] duration-700"
+      className="tp-climb relative h-[560px] min-h-0 w-full overflow-hidden rounded-[24px] border border-border transition-[background] duration-700"
       style={{
         background: `linear-gradient(to bottom, ${theme.from}, ${theme.to})`,
       }}
     >
+      <svg
+        className="tp-map-sky"
+        width="180"
+        height="115"
+        viewBox="0 0 180 115"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle cx="126" cy="39" r="21" fill="#F0D58D" opacity=".65" />
+        <circle
+          cx="126"
+          cy="39"
+          r="30"
+          stroke="#E3CF9F"
+          strokeDasharray="2 7"
+        />
+        <path
+          d="M20 72 Q20 59 34 60 Q40 43 54 52 Q70 48 73 65 Q87 64 88 76 H20Z"
+          fill="white"
+          opacity=".6"
+        />
+        <path
+          d="M105 88 L110 84 L115 88 M145 74 L150 70 L155 74"
+          stroke="#B5A58D"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
       {/* Mountains */}
       <svg
         className="absolute bottom-0 left-0 h-[46%] w-full"
@@ -242,7 +268,7 @@ export function ClimbCard({
         >
           <path
             ref={pathRef}
-            d={TRAIL}
+            d={trail}
             stroke="#CDBFAE"
             strokeWidth={5}
             strokeLinecap="round"
@@ -250,7 +276,7 @@ export function ClimbCard({
           />
           <path
             ref={solidRef}
-            d={TRAIL}
+            d={trail}
             stroke="#990000"
             strokeWidth={5}
             strokeLinecap="round"
@@ -271,12 +297,18 @@ export function ClimbCard({
                   className={cx(
                     "absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-colors duration-500",
                     done
-                      ? "size-11 border-4 border-white bg-cardinal text-white"
+                      ? "size-11 border-4 border-white bg-gold text-cardinal"
                       : "size-10 border-[3px] border-border bg-surface text-[14px] font-bold text-muted",
                   )}
                   style={{ left: x, top: y }}
                 >
-                  {done ? <Check size={18} strokeWidth={3} /> : i + 1}
+                  {done ? (
+                    <Star size={18} fill="currentColor" />
+                  ) : i === stages.length - 1 ? (
+                    <Flag size={16} />
+                  ) : (
+                    i + 1
+                  )}
                 </div>
               )}
               <div
@@ -303,27 +335,6 @@ export function ClimbCard({
           );
         })}
 
-        {/* Level card */}
-        <div className="absolute top-[23px] left-[23px] z-20 flex flex-col gap-2 rounded-[16px] bg-surface p-[18px]">
-          <div>
-            <span
-              className={cx(
-                "inline-flex rounded-full px-[10px] py-[4px] text-[12px] font-semibold",
-                theme.chip,
-              )}
-            >
-              {theme.label}
-            </span>
-          </div>
-          <p className="font-display text-[18px] font-bold text-ink">
-            Level {level.level} · {level.name}
-          </p>
-          <p className="text-[13px] text-muted">
-            {xp} of {level.nextAt} XP to the next level
-          </p>
-          <Progress value={level.pct} className="w-[210px]" />
-        </div>
-
         {/* The climber */}
         <div
           ref={avatarRef}
@@ -338,11 +349,11 @@ export function ClimbCard({
             </span>
             <span
               className={cx(
-                "flex size-[76px] items-center justify-center rounded-full border-[5px] border-gold bg-cardinal font-display text-[24px] font-bold text-gold shadow-[0_8px_20px_rgba(153,0,0,0.25)] transition-transform duration-300",
+                "tp-map-guide transition-transform duration-300",
                 moving && "scale-105",
               )}
             >
-              {initials}
+              <TrojanGuide outfit={outfit} />
             </span>
           </div>
         </div>

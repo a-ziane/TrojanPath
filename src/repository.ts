@@ -182,3 +182,12 @@ export async function fileURL(path: string) {
   if (error) throw error;
   return data.signedUrl;
 }
+
+export async function askSkillQuestion(skill: string): Promise<string> {
+  const { data, error } = await client().functions.invoke("skill-context", {
+    body: { skill },
+  });
+  if (error || typeof data?.question !== "string")
+    throw new Error("Question unavailable");
+  return data.question;
+}

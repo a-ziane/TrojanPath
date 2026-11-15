@@ -22,6 +22,7 @@ export const profileSchema = z.object({
   graduation: z.string().regex(/^\d{4}-\d{2}$/),
   interests: z.array(z.string().max(80)).max(20),
   skills: z.array(z.string().max(80)).max(30),
+  skillContext: z.record(z.string().max(80), z.string().max(1000)).optional(),
   goal: text,
   research: z.boolean(),
   hours: z.number().min(0.25).max(30),
@@ -97,6 +98,7 @@ export const checkinSchema = z.object({
   id: z.string().uuid(),
   week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   completed: z.array(z.string()).max(50),
+  confirmed: z.array(z.string()).max(50).optional(),
   enjoyed: text,
   disliked: text,
   workload: z.enum(["manageable", "too busy", "ready for more"]),
@@ -255,27 +257,20 @@ export function localDate(
 export const appStateSchema = z.object({
   profile: profileSchema.nullable(),
   plans: z.array(
-    planSpecSchema
-      .omit({ tasks: true })
-      .extend({
-        id: z.string().uuid(),
-        week: z.string(),
-        createdAt: z.string(),
-        source: z.enum(["demo", "fallback", "gemini"]),
-        tasks: z.array(
-          taskSpecSchema.extend({
-            id: z.string().uuid(),
-            status: z.enum([
-              "suggested",
-              "in progress",
-              "completed",
-              "skipped",
-            ]),
-            xp: z.number().int().min(0),
-            reflection: z.string(),
-          }),
-        ),
-      }),
+    planSpecSchema.omit({ tasks: true }).extend({
+      id: z.string().uuid(),
+      week: z.string(),
+      createdAt: z.string(),
+      source: z.enum(["demo", "fallback", "gemini"]),
+      tasks: z.array(
+        taskSpecSchema.extend({
+          id: z.string().uuid(),
+          status: z.enum(["suggested", "in progress", "completed", "skipped"]),
+          xp: z.number().int().min(0),
+          reflection: z.string(),
+        }),
+      ),
+    }),
   ),
   projects: z.array(projectSchema),
   checkins: z.array(checkinSchema),

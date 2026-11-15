@@ -28,3 +28,12 @@ Remaining external steps: Configure Auth Site URL/redirect URLs and email delive
 - Isolated browser demo: onboard profile, complete three quests, verify 100 XP / Level 2, and confirm the mountain’s current milestone advances to “Build something real.”
 - Submit a check-in: streak becomes 1, next week is saved, and completed suggestions are excluded from the new plan.
 - Backend contracts and secrets are unchanged; live Gemini and private upload verification above remain applicable. This update’s browser mutation tests used isolated local demo data, not a live student account.
+
+## Focused UI, game graphics, and guided onboarding
+
+- Production build / TypeScript: pass. Vitest: 15 tests pass, including Active filtering, completion toggling without repeated XP, recap snapshots, skill-context persistence, and provider question validation.
+- Deno checks: `generate-plan` and `skill-context` pass. Hosted `skill-context` is active and rejects anonymous requests with 401. A direct synthetic Figma request to real Gemini returned a valid contextual question. The signed-in frontend-to-function skill-question path was not exercised in this update; request/validation behavior is covered by tests and the existing authenticated helper.
+- Isolated demo browser: verified compact roadmap completion, undo completion, Active/Completed counts, automatic completed-task check-in selection, history with recap/reflections, and document editing with save/reload persistence.
+- Guided onboarding browser: verified one question at a time, Back preserving a changed name, individual skill follow-ups, project title/link/description, résumé file attachment, editable 2.5-hour availability, successful saved pathway, and a plan within the selected budget. All browser test mutations used disposable local demo data.
+- Responsive dashboard: 390px viewport has no horizontal overflow. Original vector mascot and map graphics replace the initials avatar; motion respects reduced-motion preferences.
+- New profile and check-in fields remain inside existing owner-protected JSON data; no table grants, RLS policies, or database schema changed.

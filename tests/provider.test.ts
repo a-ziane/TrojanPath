@@ -65,3 +65,62 @@ it("rejects provider errors and invented resource URLs", async () => {
     new GeminiProvider().generate(demoProfile, state),
   ).rejects.toThrow("Unapproved URL");
 });
+
+it("asks a bounded contextual skill question with server-side credentials", async () => {
+  const { skillQuestion } =
+    await import("../supabase/functions/_shared/skill-question");
+  vi.stubGlobal("Deno", {
+    env: {
+      get: (key: string) => (key === "GEMINI_API_KEY" ? "test-key" : undefined),
+    },
+  });
+  const fetcher = vi.fn(
+    async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      question: "What have you designed with Figma?",
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      ),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  expect(await skillQuestion("Figma")).toBe(
+    "What have you designed with Figma?",
+  );
+  const [, options] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+  expect(String(options.body)).toContain("Figma");
+  expect(String(options.body)).not.toContain("test-key");
+  vi.stubGlobal(
+    "fetch",
+    async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      question: "https://invented.example",
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      ),
+  );
+  await expect(skillQuestion("Figma")).rejects.toThrow("Invalid question");
+});

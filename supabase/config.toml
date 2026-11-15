@@ -3,3 +3,5 @@ project_id = "TrojanPath"
 verify_jwt = false
 [functions.upload-file]
 verify_jwt = false
+[functions.skill-context]
+verify_jwt = false

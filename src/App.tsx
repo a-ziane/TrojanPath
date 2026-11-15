@@ -1,3 +1,7 @@
+import { OnboardingWizard } from "./teammate/OnboardingWizard";
+import { TaskTracker } from "./teammate/TaskTracker";
+import { CheckinHistory } from "./teammate/CheckinHistory";
+import { SkillPrompt } from "./teammate/SkillPrompt";
 import { TaskCard as Quest } from "./teammate/TaskCard";
 import { AppShell } from "./teammate/AppShell";
 import { PathwayPage } from "./teammate/PathwayPage";
@@ -8,7 +12,13 @@ import {
   PageHeader,
   Progress as PathProgress,
 } from "./teammate/ui";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+  useRef,
+} from "react";
 import {
   NavLink,
   Navigate,
@@ -248,16 +258,19 @@ function Chips({
   );
 }
 function ProfileForm({
+  projects = [],
   initial,
   onSave,
   busy,
   mode,
 }: {
   initial: Profile;
-  onSave: (p: Profile) => void;
+  projects?: Project[];
+  onSave: (p: Profile, projects?: Project[]) => void;
   busy: boolean;
   mode: "demo" | "live";
 }) {
+  const [draftProjects, setDraftProjects] = useState<Project[]>(projects);
   const [p, setP] = useState(initial),
     [error, setError] = useState(""),
     [uploading, setUploading] = useState(false);
@@ -272,7 +285,14 @@ function ProfileForm({
           setError(r.error.issues[0].message);
           return;
         }
-        onSave(r.data);
+        for (const project of draftProjects) {
+          const result = projectSchema.safeParse(project);
+          if (!result.success) {
+            setError(result.error.issues[0].message);
+            return;
+          }
+        }
+        onSave(r.data, draftProjects);
       }}
       className="form-stack"
     >
@@ -388,6 +408,22 @@ function ProfileForm({
           ]}
         />
       </fieldset>
+      {p.skills.length > 0 && (
+        <div className="tp-skill-context">
+          {p.skills.map((skill) => (
+            <SkillPrompt
+              key={skill}
+              skill={skill}
+              value={p.skillContext?.[skill] || ""}
+              mode={mode}
+              isNew={!initial.skills.includes(skill)}
+              onChange={(answer) =>
+                update("skillContext", { ...p.skillContext, [skill]: answer })
+              }
+            />
+          ))}
+        </div>
+      )}
       <label>
         Career direction
         <input
@@ -419,6 +455,91 @@ function ProfileForm({
           placeholder="Only include things you have actually done."
         />
       </label>
+      <fieldset className="tp-onboarding-projects">
+        <legend>Current projects · optional</legend>
+        {draftProjects.map((project, i) => (
+          <div className="tp-project-fields" key={project.id}>
+            <label>
+              Project title
+              <input
+                required
+                minLength={2}
+                maxLength={150}
+                value={project.title}
+                onChange={(e) =>
+                  setDraftProjects((items) =>
+                    items.map((x, j) =>
+                      j === i ? { ...x, title: e.target.value } : x,
+                    ),
+                  )
+                }
+              />
+            </label>
+            <label>
+              Project link
+              <input
+                type="url"
+                placeholder="https://…"
+                value={project.url}
+                onChange={(e) =>
+                  setDraftProjects((items) =>
+                    items.map((x, j) =>
+                      j === i ? { ...x, url: e.target.value } : x,
+                    ),
+                  )
+                }
+              />
+            </label>
+            <label>
+              What are you working on?
+              <textarea
+                required
+                minLength={5}
+                maxLength={3000}
+                value={project.description}
+                onChange={(e) =>
+                  setDraftProjects((items) =>
+                    items.map((x, j) =>
+                      j === i ? { ...x, description: e.target.value } : x,
+                    ),
+                  )
+                }
+              />
+            </label>
+            {!projects.some((p) => p.id === project.id) && (
+              <button
+                type="button"
+                className="tp-detail-button"
+                onClick={() =>
+                  setDraftProjects((items) => items.filter((_, j) => j !== i))
+                }
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          className="secondary small-button"
+          onClick={() =>
+            setDraftProjects((items) => [
+              ...items,
+              {
+                id: crypto.randomUUID(),
+                title: "",
+                url: "",
+                description: "",
+                date: localDate(),
+                skills: [],
+                completed: false,
+              },
+            ])
+          }
+        >
+          + Add project
+        </button>
+      </fieldset>
       <label>
         Résumé · optional
         <input
@@ -447,58 +568,61 @@ function ProfileForm({
               : "PDF or text, up to 2 MB. Stored privately in live mode. Automatic parsing is not enabled."}
         </small>
       </label>
-      <div className="form-grid">
-        <label>
-          Ladder theme
-          <select
-            value={p.theme}
-            onChange={(e) =>
-              update("theme", e.target.value as Profile["theme"])
-            }
-          >
-            {THEMES.map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Avatar outfit
-          <select
-            value={p.avatar}
-            onChange={(e) =>
-              update("avatar", e.target.value as Profile["avatar"])
-            }
-          >
-            <option value="cardinal">Cardinal</option>
-            <option value="gold">Gold</option>
-            <option value="sage">Sage</option>
-          </select>
-        </label>
-        <label>
-          Timezone
+      <details className="tp-form-preferences">
+        <summary>Preferences & leaderboard</summary>
+        <div className="form-grid">
+          <label>
+            Pathway theme
+            <select
+              value={p.theme}
+              onChange={(e) =>
+                update("theme", e.target.value as Profile["theme"])
+              }
+            >
+              {THEMES.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Avatar outfit
+            <select
+              value={p.avatar}
+              onChange={(e) =>
+                update("avatar", e.target.value as Profile["avatar"])
+              }
+            >
+              <option value="cardinal">Cardinal</option>
+              <option value="gold">Gold</option>
+              <option value="sage">Sage</option>
+            </select>
+          </label>
+          <label>
+            Timezone
+            <input
+              required
+              value={p.timezone}
+              onChange={(e) => update("timezone", e.target.value)}
+            />
+          </label>
+          <label>
+            Leaderboard display name
+            <input
+              maxLength={40}
+              value={p.displayName}
+              onChange={(e) => update("displayName", e.target.value)}
+            />
+          </label>
+        </div>
+        <label className="checkbox">
           <input
-            required
-            value={p.timezone}
-            onChange={(e) => update("timezone", e.target.value)}
+            type="checkbox"
+            checked={p.leaderboard}
+            onChange={(e) => update("leaderboard", e.target.checked)}
           />
+          Opt in to the monthly leaderboard using my display name
         </label>
-        <label>
-          Leaderboard display name
-          <input
-            maxLength={40}
-            value={p.displayName}
-            onChange={(e) => update("displayName", e.target.value)}
-          />
-        </label>
-      </div>
-      <label className="checkbox">
-        <input
-          type="checkbox"
-          checked={p.leaderboard}
-          onChange={(e) => update("leaderboard", e.target.checked)}
-        />
-        Opt in to the monthly leaderboard using my display name
-      </label>
+      </details>
       {error && (
         <p role="alert" className="error">
           {error}
@@ -518,9 +642,9 @@ export default function App() {
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
     [error, setError] = useState(""),
-    [modal, setModal] = useState<
-      "profile" | "project" | "checkin" | "resume" | null
-    >(null),
+    [modal, setModal] = useState<"profile" | "project" | "checkin" | null>(
+      null,
+    ),
     [editing, setEditing] = useState<Project | null>(null),
     [post, setPost] = useState(""),
     [authMode, setAuthMode] = useState<"login" | "signup">("login"),
@@ -539,6 +663,7 @@ export default function App() {
         } else if (supabase) {
           const { data } = await supabase.auth.getSession();
           if (data.session && active) {
+            setAuthEmail(data.session.user.email || "");
             setState(await repo.loadLive());
             setMode("live");
           }
@@ -560,6 +685,7 @@ export default function App() {
         session &&
         localStorage.getItem("trojanpath:mode") !== "demo"
       ) {
+        setAuthEmail(session.user.email || "");
         setTimeout(() => {
           repo
             .loadLive()
@@ -606,13 +732,14 @@ export default function App() {
       setState(repo.loadDemo());
       setMode("demo");
       localStorage.setItem("trojanpath:mode", "demo");
-      navigate("/plan");
+      navigate("/progress");
     });
   }
-  async function saveProfile(p: Profile) {
+  async function saveProfile(p: Profile, projects: Project[] = []) {
     await run(async () => {
       if (mode === "demo") {
-        let next = { ...state, profile: p };
+        let next: AppState = { ...state, profile: p };
+        for (const project of projects) next = saveProject(next, project);
         if (!next.plans.length)
           next = {
             ...next,
@@ -621,6 +748,7 @@ export default function App() {
         commit(next);
       } else {
         await repo.liveProfile(p);
+        for (const project of projects) await repo.liveProject(project);
         await refresh();
         if (!state.plans.length) {
           try {
@@ -629,7 +757,17 @@ export default function App() {
             await repo.liveSaveFallback(
               makePlan(
                 p,
-                { ...state, profile: p },
+                {
+                  ...state,
+                  profile: p,
+                  projects: [
+                    ...projects,
+                    ...state.projects.filter(
+                      (existing) =>
+                        !projects.some((project) => project.id === existing.id),
+                    ),
+                  ],
+                },
                 weekKey(new Date(), p.timezone),
                 "fallback",
               ),
@@ -642,7 +780,8 @@ export default function App() {
         }
       }
       setModal(null);
-      navigate("/plan");
+      navigate("/progress");
+      window.scrollTo(0, 0);
     }, "Your path is saved. Let’s take the first step.");
   }
   async function changeTask(
@@ -780,7 +919,7 @@ export default function App() {
                   localStorage.removeItem("trojanpath:mode");
                   setState(await repo.loadLive());
                   setMode("live");
-                  navigate("/plan");
+                  navigate("/progress");
                 });
               }}
             >
@@ -839,7 +978,7 @@ export default function App() {
           mode={mode}
           onProfile={() => setModal("profile")}
           onCheckin={() => setModal("checkin")}
-          onResume={() => setModal("resume")}
+          onResume={() => navigate("/resume")}
           onLogout={() =>
             void run(async () => {
               if (mode === "live") await supabase?.auth.signOut();
@@ -850,33 +989,30 @@ export default function App() {
           }
         >
           {!profile ? (
-            <section className="onboarding card">
-              <div className="section-kicker">
-                <Sparkles size={16} />
-                LET’S MAKE THIS YOURS
-              </div>
-              <h1>Every great path starts with you.</h1>
-              <ProfileForm
-                initial={
-                  mode === "demo"
-                    ? demoProfile
-                    : {
-                        ...demoProfile,
-                        name: "",
-                        email: authEmail,
-                        major: "",
-                        interests: [],
-                        skills: [],
-                        goal: "I’m exploring",
-                        hours: 3,
-                        displayName: "",
-                      }
-                }
-                onSave={saveProfile}
-                busy={busy}
-                mode={mode}
-              />
-            </section>
+            <OnboardingWizard
+              initial={
+                mode === "demo"
+                  ? demoProfile
+                  : {
+                      ...demoProfile,
+                      name: "",
+                      email: authEmail,
+                      major: "",
+                      standing: "",
+                      graduation: "",
+                      experiences: "",
+                      minor: "",
+                      interests: [],
+                      skills: [],
+                      goal: "I’m exploring",
+                      hours: 3,
+                      displayName: "",
+                    }
+              }
+              onSave={saveProfile}
+              busy={busy}
+              mode={mode}
+            />
           ) : (
             <Routes>
               <Route
@@ -943,7 +1079,7 @@ export default function App() {
                       setEditing(p || null);
                       setModal("project");
                     }}
-                    onResume={() => setModal("resume")}
+                    onResume={() => navigate("/resume")}
                     onPost={(p) =>
                       setPost(
                         `I recently completed ${p.title}.\n\n${p.description}\n\nThis project gave me an opportunity to work with ${p.skills.join(", ") || "new ideas"}. I’m looking forward to building on what I learned.${p.url ? "\n\n" + p.url : ""}\n\n#StudentProjects #LearningByDoing`,
@@ -957,6 +1093,10 @@ export default function App() {
                 element={
                   <PathwayPage
                     state={state}
+                    busy={busy}
+                    onTask={changeTask}
+                    onReplace={replace}
+                    onCheckin={() => setModal("checkin")}
                     onEdit={() => setModal("profile")}
                   />
                 }
@@ -974,8 +1114,38 @@ export default function App() {
                 element={<Navigate to="/progress" replace />}
               />
               <Route path="/week" element={<Navigate to="/plan" replace />} />
+              <Route
+                path="/checkins"
+                element={
+                  <CheckinHistory
+                    state={state}
+                    onCheckin={() => setModal("checkin")}
+                  />
+                }
+              />
+              <Route
+                path="/resume"
+                element={
+                  <ResumeEditor
+                    profile={profile}
+                    projects={state.projects}
+                    busy={busy}
+                    onSave={(text) =>
+                      void run(async () => {
+                        const next = { ...profile, resumeDraft: text };
+                        if (mode === "demo")
+                          commit({ ...state, profile: next });
+                        else {
+                          await repo.liveProfile(next);
+                          await refresh();
+                        }
+                      }, "Résumé saved.")
+                    }
+                  />
+                }
+              />
               <Route path="/resources" element={<Resources />} />
-              <Route path="*" element={<Navigate to="/plan" replace />} />
+              <Route path="*" element={<Navigate to="/progress" replace />} />
             </Routes>
           )}
           <footer>
@@ -1017,6 +1187,7 @@ export default function App() {
       {modal === "profile" && profile && (
         <Modal title="Make your path your own" onClose={() => setModal(null)}>
           <ProfileForm
+            projects={state.projects}
             initial={profile}
             onSave={saveProfile}
             busy={busy}
@@ -1093,23 +1264,8 @@ export default function App() {
                   await refresh();
                 }
                 setModal(null);
-                navigate("/plan");
+                navigate("/progress");
               }, "Check-in saved. One streak credit per calendar week; your next plan is ready.")
-            }
-          />
-        </Modal>
-      )}
-      {modal === "resume" && profile && (
-        <Modal title="Your career materials" onClose={() => setModal(null)}>
-          <p className="muted">
-            An editable draft built from confirmed profile information. Review
-            every line before sharing.
-          </p>
-          <ResumeEditor
-            profile={profile}
-            projects={state.projects}
-            onSave={(text) =>
-              void saveProfile({ ...profile, resumeDraft: text })
             }
           />
         </Modal>
@@ -1165,193 +1321,92 @@ function WeeklyPlan({
   xp: number;
   projects: number;
 }) {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [plan?.id]);
-  const [view, setView] = useState(""),
-    [filter, setFilter] = useState("all");
+  const [view, setView] = useState("");
   const selected = plans.find((p) => p.id === view) || plan;
   const complete =
     selected?.tasks.filter((t) => t.status === "completed").length || 0;
-  const minutes =
-    selected?.tasks.reduce(
-      (n, t) => n + (t.status === "skipped" ? 0 : t.minutes),
-      0,
-    ) || 0;
   return (
-    <div className="flex flex-col gap-7">
+    <div className="tp-simple-page">
       <PageHeader
-        eyebrow="Your weekly game plan"
-        title="This week’s quests"
-        subtitle={`A few manageable steps, chosen for you, ${profile.name.split(" ")[0]}.`}
+        eyebrow="Your quests"
+        title="This week"
         actions={
           <PathButton variant="secondary" onClick={onCheckin}>
-            Start check-in →
+            Check in
           </PathButton>
         }
       />
-      <div className="tp-stats-grid">
-        <PathCard>
-          <p className="text-[13px] text-muted">Quests completed</p>
-          <p className="mt-2 font-display text-[30px] font-bold">
-            {complete}
-            <span className="text-[18px] text-muted">
-              {" "}
-              / {selected?.tasks.length || 0}
+      <div className="tp-compact-stats">
+        <span>
+          {complete}/{selected?.tasks.length || 0} completed
+        </span>
+        <span>Level {Math.floor(xp / 100) + 1}</span>
+        <span>
+          {Number(
+            (
+              (selected?.tasks
+                .filter((t) => t.status !== "skipped")
+                .reduce((sum, t) => sum + t.minutes, 0) || 0) / 60
+            ).toFixed(1),
+          )}{" "}
+          hr planned
+        </span>
+        <span>{profile.hours} hr available</span>
+      </div>
+      {selected ? (
+        <>
+          <label className="tp-week-selector">
+            Week
+            <select
+              aria-label="Saved week"
+              value={selected.id}
+              onChange={(e) => setView(e.target.value)}
+            >
+              {[...plans]
+                .sort((a, b) => b.week.localeCompare(a.week))
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.week}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <TaskTracker
+            tasks={selected.tasks}
+            busy={busy}
+            onTask={onTask}
+            onReplace={onReplace}
+          />
+          <details className="tp-inline-details">
+            <summary>About this plan</summary>
+            <p>{selected.direction}</p>
+            <p>{selected.change}</p>
+            <span className="tp-task-meta">
+              {selected.source === "gemini"
+                ? "Generated with Gemini"
+                : selected.source === "demo"
+                  ? "Demo suggestions"
+                  : "Starter suggestions"}
             </span>
-          </p>
-        </PathCard>
-        <PathCard>
-          <p className="text-[13px] text-muted">Your level</p>
-          <p className="mt-2 font-display text-[30px] font-bold">
-            Level {Math.floor(xp / 100) + 1}
-          </p>
-          <PathProgress value={(xp % 100) / 100} />
-          <p className="mt-2 text-[12px] text-muted">
-            {xp} XP · {100 - (xp % 100)} to the next level
-          </p>
-        </PathCard>
-        <PathCard>
-          <p className="text-[13px] text-muted">Made to fit your week</p>
-          <p className="mt-2 font-display text-[30px] font-bold">
-            {minutes} <span className="text-[18px] text-muted">minutes</span>
-          </p>
-          <p className="mt-2 text-[12px] text-muted">
-            Your budget: {profile.hours} hours · {projects} projects saved
-          </p>
-        </PathCard>
-      </div>
-      <div className="tp-week-grid">
-        <section className="min-w-0">
-          {selected ? (
-            <>
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex gap-2">
-                  {["all", "active", "completed"].map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFilter(f)}
-                      aria-pressed={filter === f}
-                      className={`rounded-full px-4 py-2 text-[13px] font-semibold ${filter === f ? "bg-cardinal text-white" : "bg-surface text-muted border border-border"}`}
-                    >
-                      {f[0].toUpperCase() + f.slice(1)}
-                    </button>
-                  ))}
-                </div>
-                <label className="text-[12px] text-muted">
-                  Saved week
-                  <select
-                    aria-label="Saved week"
-                    className="ml-2 rounded-lg border border-border bg-surface p-2"
-                    value={selected.id}
-                    onChange={(e) => setView(e.target.value)}
-                  >
-                    {[...plans]
-                      .sort((a, b) => b.week.localeCompare(a.week))
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          Week of {p.week}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              </div>
-              <div className="flex flex-col gap-4">
-                {selected.tasks
-                  .filter(
-                    (t) =>
-                      filter === "all" ||
-                      (filter === "completed"
-                        ? t.status === "completed"
-                        : !["completed", "skipped"].includes(t.status)),
-                  )
-                  .map((t, i) => (
-                    <Quest
-                      key={t.id}
-                      task={t}
-                      index={i}
-                      busy={busy}
-                      onStatus={(s) => onTask(t, s)}
-                      onReflection={(r) => onTask(t, t.status, r)}
-                      onReplace={() => onReplace(t)}
-                    />
-                  ))}
-              </div>
-              {filter === "completed" && complete === 0 && (
-                <PathCard>
-                  <p className="text-muted">
-                    Your first win is waiting. Complete a quest when you’re
-                    ready.
-                  </p>
-                </PathCard>
-              )}
-              <p className="mt-4 text-[12px] text-muted">
-                {selected.source === "gemini"
-                  ? "Generated with Gemini · Review suggestions before acting"
-                  : selected.source === "demo"
-                    ? "Demo · Deterministic sample suggestions"
-                    : "Fallback plan · Deterministic suggestions; AI unavailable"}
-              </p>
-            </>
-          ) : (
-            <PathCard>
-              <h2 className="font-display text-[24px] font-bold">
-                Your path is ready to begin.
-              </h2>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <PathButton onClick={onGenerate} disabled={busy}>
-                  {busy ? "Building your plan…" : "Generate first plan"}
-                </PathButton>
-                <PathButton
-                  variant="secondary"
-                  onClick={onFallback}
-                  disabled={busy}
-                >
-                  Use a starter plan
-                </PathButton>
-              </div>
-            </PathCard>
-          )}
-        </section>
-        <aside className="flex flex-col gap-5">
-          <div className="rounded-[20px] bg-gold-soft p-6">
-            <PathChip tone="goldSolid">✦ Adjusted for you</PathChip>
-            <h2 className="mt-4 font-display text-[22px] font-bold">
-              A plan that fits your life.
-            </h2>
-            <p className="mt-3 text-[14px] text-muted">
-              {selected?.change ||
-                "Tell us about your interests and availability to find your next step."}
-            </p>
-            <p className="mt-3 text-[13px] text-muted">
-              Suggestions, not assignments. Accept, replace, or skip anything.
-            </p>
+          </details>
+        </>
+      ) : (
+        <div className="tp-paper-card">
+          <p>No plan yet.</p>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <PathButton disabled={busy} onClick={onGenerate}>
+              Generate plan
+            </PathButton>
+            <PathButton
+              disabled={busy}
+              variant="secondary"
+              onClick={onFallback}
+            >
+              Use starter plan
+            </PathButton>
           </div>
-          <PathCard>
-            <h2 className="font-display text-[20px] font-bold">
-              The bigger picture
-            </h2>
-            <p className="mt-3 text-[14px] text-muted">
-              {selected?.direction || profile.goal}
-            </p>
-            <PathButton variant="secondary" href="/progress" className="mt-5">
-              Explore your pathway →
-            </PathButton>
-          </PathCard>
-          <PathCard>
-            <h2 className="font-display text-[20px] font-bold">
-              Pause. Reflect. Reset.
-            </h2>
-            <p className="mt-3 text-[14px] text-muted">
-              A busy week or a new interest? Your check-in helps shape next
-              week.
-            </p>
-            <PathButton onClick={onCheckin} className="mt-5">
-              Check in this week
-            </PathButton>
-          </PathCard>
-        </aside>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1501,28 +1556,53 @@ function CheckinForm({
   const week = weekKey(new Date(), state.profile!.timezone);
   const previous = state.checkins.find((c) => c.week === week);
   const [c, setC] = useState<Checkin>(
-    previous || {
-      id: crypto.randomUUID(),
-      week,
-      completed: state.plans.flatMap((p) =>
-        p.tasks.filter((t) => t.status === "completed").map((t) => t.id),
-      ),
-      enjoyed: "",
-      disliked: "",
-      workload: "manageable",
-      goal: "",
-      reflection: "",
-    },
+    previous
+      ? {
+          ...previous,
+          completed: [
+            ...new Set([
+              ...previous.completed,
+              ...state.plans
+                .filter((p) => p.week === week)
+                .flatMap((p) =>
+                  p.tasks
+                    .filter((t) => t.status === "completed")
+                    .map((t) => t.id),
+                ),
+            ]),
+          ],
+        }
+      : {
+          id: crypto.randomUUID(),
+          week,
+          completed: state.plans
+            .filter((p) => p.week === week)
+            .flatMap((p) =>
+              p.tasks.filter((t) => t.status === "completed").map((t) => t.id),
+            ),
+          enjoyed: "",
+          disliked: "",
+          workload: "manageable",
+          goal: "",
+          reflection: "",
+        },
   );
   const tasks = state.plans
-    .filter((p) => p.week <= week)
+    .filter((p) => p.week === week)
     .flatMap((p) => p.tasks);
   return (
     <form
       className="form-stack"
       onSubmit={(e) => {
         e.preventDefault();
-        onSave(c);
+        onSave({
+          ...c,
+          confirmed: tasks
+            .filter(
+              (t) => t.status === "completed" && c.completed.includes(t.id),
+            )
+            .map((t) => t.id),
+        });
       }}
     >
       <p className="muted">
@@ -1630,236 +1710,194 @@ function ProfilePage({
   onPost: (p: Project) => void;
 }) {
   const [fileError, setFileError] = useState("");
+  const openFile = (path: string) =>
+    void repo
+      .fileURL(path)
+      .then((url) => window.open(url, "_blank", "noopener,noreferrer"))
+      .catch((e) => setFileError(String(e)));
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">THE PERSON BEHIND THE PATH</span>
-          <h1>A story only you can build.</h1>
-          <p>Your interests, your work, your next chapter.</p>
-        </div>
-        <button className="secondary" onClick={onEdit}>
-          Edit profile <UserRound size={16} />
-        </button>
+    <div className="tp-simple-page">
+      <PageHeader
+        eyebrow="Profile"
+        title={p.name}
+        subtitle={`${p.major}${p.minor ? ` · ${p.minor}` : ""}`}
+        actions={
+          <>
+            <PathButton variant="secondary" onClick={onEdit}>
+              Edit profile
+            </PathButton>
+            <PathButton onClick={onResume}>Résumé</PathButton>
+          </>
+        }
+      />
+      <div className="tp-compact-stats">
+        <span>{p.degree}</span>
+        <span>{p.standing}</span>
+        <span>Graduating {p.graduation}</span>
+        <span>{p.hours} hr / week</span>
       </div>
-      <section className="profile-banner card">
-        <Avatar color={p.avatar} />
+      <section className="tp-paper-card tp-profile-overview">
         <div>
-          <span className="section-kicker">MEET YOUR FUTURE SELF</span>
-          <h2>{p.name}</h2>
-          <p>
-            {p.major}
-            {p.minor ? ` · Minor in ${p.minor}` : ""}
-          </p>
-          <div className="chips">
-            <span className="chip">
-              {p.degree} · {p.standing}
-            </span>
-            <span className="chip">Class of {p.graduation.slice(0, 4)}</span>
-          </div>
+          <h2>Goal</h2>
+          <p>{p.goal || "Exploring"}</p>
         </div>
-        <button className="secondary" onClick={onResume}>
-          Career materials <ArrowUpRight size={16} />
-        </button>
-      </section>
-      <div className="profile-columns">
-        <section className="card">
-          <h3>What sparks your curiosity</h3>
-          <div className="chips">
-            {p.interests.length ? (
-              p.interests.map((x) => (
-                <span key={x} className="chip selected">
-                  {x}
-                </span>
-              ))
-            ) : (
-              <p>Add an interest to personalize your path.</p>
-            )}
-          </div>
-          <h3>Skills you bring</h3>
-          <small>Self-reported · Activities do not imply mastery.</small>
-          <div className="chips">
-            {p.skills.map((x) => (
-              <span key={x} className="chip">
-                {x}
+        <div>
+          <h2>Interests</h2>
+          <p>{p.interests.join(" · ") || "Add your interests"}</p>
+        </div>
+        <div>
+          <h2>Skills</h2>
+          <div className="flex flex-wrap gap-2">
+            {p.skills.map((skill) => (
+              <span className="tp-skill-tag" key={skill}>
+                {skill}
               </span>
             ))}
           </div>
-        </section>
-        <section className="card">
-          <h3>Where you’re headed</h3>
-          <p>{p.goal || "I’m exploring"}</p>
-          <p className="muted">
-            {p.hours} hours a week ·{" "}
-            {p.research
-              ? "Interested in research or graduate school"
-              : "Learning by exploring"}
-          </p>
-          <h3>Your experience</h3>
-          <p className="pre-wrap">
-            {p.experiences ||
-              "Your experience starts somewhere. Add confirmed work, service, or research when you’re ready."}
-          </p>
-          {p.resumePath && (
-            <button
-              className="text-button"
-              onClick={() =>
-                void repo
-                  .fileURL(p.resumePath!)
-                  .then((url) =>
-                    window.open(url, "_blank", "noopener,noreferrer"),
-                  )
-                  .catch((e) => setFileError(String(e)))
-              }
-            >
-              Open attached résumé <ArrowUpRight size={14} />
-            </button>
+          {p.skillContext && (
+            <details className="tp-inline-details mt-3">
+              <summary>Skill experience</summary>
+              {Object.entries(p.skillContext)
+                .filter(([skill, answer]) => p.skills.includes(skill) && answer)
+                .map(([skill, answer]) => (
+                  <p key={skill}>
+                    <strong>{skill}:</strong> {answer}
+                  </p>
+                ))}
+            </details>
           )}
-        </section>
-      </div>
-      <div className="section-title">
-        <div>
-          <span className="section-kicker">PROOF OF YOUR PROGRESS</span>
-          <h2>Things you’ve brought to life.</h2>
         </div>
-        <button className="primary" onClick={() => onProject()}>
-          <Plus size={17} />
-          Add project
-        </button>
+        {p.experiences && (
+          <div>
+            <h2>Background</h2>
+            <p className="whitespace-pre-wrap">{p.experiences}</p>
+          </div>
+        )}
+        {p.resumePath && (
+          <button
+            className="tp-detail-button"
+            onClick={() => openFile(p.resumePath!)}
+          >
+            Open uploaded résumé ↗
+          </button>
+        )}
+      </section>
+      <div className="tp-section-title">
+        <h2>Projects</h2>
+        <PathButton variant="secondary" onClick={() => onProject()}>
+          + Add project
+        </PathButton>
       </div>
-      {fileError && (
-        <p className="error" role="alert">
-          {fileError}
-        </p>
-      )}
-      <div className="project-grid">
-        {state.projects.map((p) => (
-          <article key={p.id} className="card project-card">
-            <div className="project-visual">
-              <Rocket size={38} />
-              <span>
-                {p.completed ? "COMPLETED PROJECT" : "WORK IN PROGRESS"}
+      {fileError && <p role="alert">{fileError}</p>}
+      <div className="tp-project-list">
+        {state.projects.map((project) => (
+          <article className="tp-paper-card" key={project.id}>
+            <div className="tp-section-title">
+              <h3>{project.title}</h3>
+              <span className="tp-task-meta">
+                {project.completed ? "Completed" : "In progress"}
               </span>
             </div>
-            <div className="project-body">
-              <small>{p.date}</small>
-              <h3>{p.title}</h3>
-              <p>{p.description}</p>
-              <div className="chips">
-                {p.skills.filter(Boolean).map((s) => (
-                  <span className="chip" key={s}>
-                    {s}
-                  </span>
-                ))}
-              </div>
-              {p.url && (
-                <a href={p.url} target="_blank" rel="noreferrer">
-                  View project <ArrowUpRight size={14} />
+            <p className="text-[14px] text-muted">{project.description}</p>
+            {project.skills.length > 0 && (
+              <p className="tp-task-meta">{project.skills.join(" · ")}</p>
+            )}
+            <div className="tp-project-links">
+              {project.url && (
+                <a href={project.url} target="_blank" rel="noreferrer">
+                  View project ↗
                 </a>
               )}
-              {p.attachment && (
-                <button
-                  className="text-button"
-                  onClick={() =>
-                    void repo
-                      .fileURL(p.attachment!)
-                      .then((url) =>
-                        window.open(url, "_blank", "noopener,noreferrer"),
-                      )
-                      .catch((e) => setFileError(String(e)))
-                  }
-                >
-                  Open {p.attachmentName || "attachment"}{" "}
-                  <ArrowUpRight size={13} />
+              {project.attachment && (
+                <button onClick={() => openFile(project.attachment!)}>
+                  Open attachment ↗
                 </button>
               )}
-              <div className="project-actions">
-                <button className="text-button" onClick={() => onProject(p)}>
-                  Edit project
+              <button onClick={() => onProject(project)}>Edit project</button>
+              {project.completed && (
+                <button onClick={() => onPost(project)}>
+                  Draft LinkedIn post
                 </button>
-                {p.completed && (
-                  <button className="text-button" onClick={() => onPost(p)}>
-                    Draft LinkedIn post <ArrowUpRight size={13} />
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </article>
         ))}
-        {!state.projects.length && (
-          <div className="card empty">
-            <FolderPlus size={32} />
-            <h3>Your first project belongs here.</h3>
-            <p>
-              A notebook, a performance, a research outline.
-              <br />
-              Small things count when they’re yours.
-            </p>
-            <button className="secondary" onClick={() => onProject()}>
-              Add your first project
-            </button>
-          </div>
-        )}
       </div>
-    </>
+      {!state.projects.length && <p className="tp-empty">No projects yet.</p>}
+    </div>
   );
 }
+
 function ResumeEditor({
   profile,
   projects,
   onSave,
+  busy = false,
 }: {
   profile: Profile;
   projects: Project[];
-  onSave: (s: string) => void;
+  onSave: (text: string) => void;
+  busy?: boolean;
 }) {
   const [text, setText] = useState(
     profile.resumeDraft || resumeText(profile, projects),
   );
-  const [summary, setSummary] = useState(false);
+  const [saved, setSaved] = useState(profile.resumeDraft || "");
+  const paper = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (paper.current) {
+      paper.current.style.height = "auto";
+      paper.current.style.height = `${Math.max(880, paper.current.scrollHeight)}px`;
+    }
+  }, [text]);
+  useEffect(() => {
+    setSaved(profile.resumeDraft || "");
+  }, [profile.resumeDraft]);
   return (
-    <>
-      <label className="checkbox">
-        <input
-          type="checkbox"
-          checked={summary}
-          onChange={(e) => setSummary(e.target.checked)}
-        />
-        Print profile summary instead of résumé draft
-      </label>
-      {!summary && (
+    <section className="tp-document-editor">
+      <div className="tp-doc-toolbar">
+        <div>
+          <h1>{profile.name} — Résumé</h1>
+          <span>{text === saved ? "Saved" : "Unsaved changes"}</span>
+        </div>
+        <div className="flex gap-2">
+          <PathButton
+            variant="secondary"
+            className="px-3 py-2 text-[13px]"
+            disabled={busy}
+            onClick={() => onSave(text)}
+          >
+            Save
+          </PathButton>
+          <PathButton
+            className="px-3 py-2 text-[13px]"
+            onClick={() => window.print()}
+          >
+            Export PDF
+          </PathButton>
+        </div>
+      </div>
+      <div className="tp-doc-ruler" aria-hidden="true">
+        1 · · · · 2 · · · · 3 · · · · 4 · · · · 5 · · · · 6
+      </div>
+      <div className="tp-doc-canvas">
         <textarea
-          aria-label="Editable résumé draft"
-          className="resume-editor"
+          ref={paper}
+          aria-label="Editable résumé document"
+          spellCheck
+          className="tp-doc-paper"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          maxLength={4000}
         />
-      )}
+      </div>
       <div className="print-material">
-        <h2>
-          {summary ? `${profile.name} · Profile summary` : "Résumé draft"}
-        </h2>
-        <pre>
-          {summary
-            ? `${resumeText(profile, projects)}\n\nINTERESTS\n${profile.interests.join(", ")}\n\nDIRECTION\n${profile.goal}`
-            : text}
-        </pre>
+        <pre>{text}</pre>
       </div>
-      <div className="button-row">
-        <button className="secondary" onClick={() => onSave(text)}>
-          Save draft
-        </button>
-        <button className="primary" onClick={() => window.print()}>
-          Print / Save as PDF
-        </button>
-      </div>
-      <small>
-        Use your browser’s print dialog to save a PDF. Saving a draft does not
-        verify its contents.
-      </small>
-    </>
+    </section>
   );
 }
+
 function Progress({ state, mode }: { state: AppState; mode: string }) {
   const p = state.profile!,
     xp = totalXP(state),

@@ -1,3 +1,4 @@
+import { TrojanGuide } from "./TrojanGuide";
 import { Link } from "react-router-dom";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
@@ -242,29 +243,20 @@ export function PathDoodle({
 }
 
 export function Avatar({
-  initials,
   size = 40,
   className,
-  textClass = "text-gold",
-  bg = "bg-cardinal",
+  outfit = "cardinal",
 }: {
-  initials: string;
   size?: number;
   className?: string;
-  textClass?: string;
-  bg?: string;
+  outfit?: "cardinal" | "gold" | "sage";
 }) {
   return (
     <span
-      className={cx(
-        "flex shrink-0 items-center justify-center rounded-full font-display font-bold",
-        bg,
-        textClass,
-        className,
-      )}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.35) }}
+      className={cx("tp-guide-avatar", className)}
+      style={{ width: size, height: size }}
     >
-      {initials}
+      <TrojanGuide outfit={outfit} />
     </span>
   );
 }
