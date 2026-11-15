@@ -105,7 +105,9 @@ describe("complete career planning flow", () => {
     expect(new Set(profiles.map((p) => discipline(p))).size).toBe(5);
     expect(
       new Set(
-        profiles.map((p) => makePlan(p, base(), "2026-11-09").tasks[0].title),
+        profiles.map(
+          (p) => makePlan(p, base(), "2026-11-09", "fallback").tasks[0].title,
+        ),
       ).size,
     ).toBe(5);
   });

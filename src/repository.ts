@@ -1,3 +1,4 @@
+import { withDemoHackSC } from "../shared/demoTasks";
 import { supabase } from "./supabase";
 import {
   emptyState,
@@ -16,7 +17,20 @@ export function loadDemo(): AppState {
   const raw = localStorage.getItem(KEY);
   if (!raw) return emptyState();
   try {
-    return appStateSchema.parse(JSON.parse(raw));
+    const state = appStateSchema.parse(JSON.parse(raw));
+    const latest = [...state.plans].sort((a, b) =>
+      b.week.localeCompare(a.week),
+    )[0];
+    if (latest) {
+      const upgraded = withDemoHackSC(latest, state);
+      if (upgraded !== latest) {
+        state.plans = state.plans.map((p) =>
+          p.id === latest.id ? upgraded : p,
+        );
+        persistDemo(state);
+      }
+    }
+    return state;
   } catch {
     throw new Error(
       "The saved demo could not be read. Use Reset demo to start again.",

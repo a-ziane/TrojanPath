@@ -45,3 +45,11 @@ Remaining external steps: Configure Auth Site URL/redirect URLs and email delive
 - Production build / TypeScript and all 17 tests pass. Achievement tests verify recorded awards and that duplicate check-in weeks cannot inflate a streak.
 - Browser verification: three completed demo tasks show 100 XP and Level 2; First Step is earned. The final preview at 150 XP renders the guide at the second floor (118px from the base), with no horizontal overflow in the observed 721px viewport. Prior saved demo progress and check-in status remain intact.
 - No backend, database, credentials, or API model changes in this update.
+
+## Profile reference, HackSC demo task, and horse logo
+
+- Profile now follows the supplied banner / Interests / Skills / Goal / project-card layout, with live XP level and existing edit, résumé, attachment, project-link, and LinkedIn-draft actions retained.
+- The supplied photographed horse icon was cleaned into `public/trojanpath-logo.png` and installed in the app wordmark, sign-in screen, favicon, and Apple touch icon. Asset paths respect the Vite base path.
+- Demo plans include an optional 60-minute “Attend HackSC hackathon” participation block linking to the official HackSC site. Saved demos upgrade only an untouched, unawarded suggestion of at least 60 minutes. Completed/reflected work is protected, total planned time never increases, and live fallback plans are unchanged.
+- Browser: profile banner and three info cards render as requested; existing project card/actions remain. Reloaded demo shows HackSC in its saved weekly plan with 40 XP and the original 120-minute plan budget intact.
+- Production build / TypeScript and all 19 tests pass. Deno checks for the planning function pass with the new shared demo helper.

@@ -1,3 +1,6 @@
+import { BrandMark } from "./BrandMark";
+import { TrojanGuide } from "./teammate/TrojanGuide";
+import { levelFor } from "./teammate/pathway";
 import { Celebration } from "./teammate/Celebration";
 import { GameProgress } from "./teammate/GameProgress";
 import { Podium } from "./teammate/Podium";
@@ -42,6 +45,9 @@ import {
   Compass,
   Flame,
   FolderPlus,
+  Pencil,
+  FileText,
+  Wrench,
   GraduationCap,
   LayoutGrid,
   Leaf,
@@ -152,13 +158,12 @@ function Avatar({
 function Logo() {
   return (
     <div className="logo">
-      <span className="brand-mark">
-        <Map size={23} />
-      </span>
-      Trojan<span>Path</span>
+      <BrandMark />
+      <strong>TrojanPath</strong>
     </div>
   );
 }
+
 function Modal({
   title,
   children,
@@ -835,9 +840,8 @@ export default function App() {
         <main className="welcome">
           <div className="welcome-art tp-welcome-art">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-[10px] bg-gold font-display text-[15px] font-bold text-[#990000]">
-                TP
-              </span>
+              <BrandMark className="brand-mark-large" />
+
               <strong className="font-display text-[23px] text-white">
                 Trojan Path
               </strong>
@@ -1721,94 +1725,161 @@ function ProfilePage({
       .fileURL(path)
       .then((url) => window.open(url, "_blank", "noopener,noreferrer"))
       .catch((e) => setFileError(String(e)));
+  const level = levelFor(totalXP(state));
   return (
-    <div className="tp-simple-page">
-      <PageHeader
-        eyebrow="Profile"
-        title={p.name}
-        subtitle={`${p.major}${p.minor ? ` · ${p.minor}` : ""}`}
-        actions={
-          <>
-            <PathButton variant="secondary" onClick={onEdit}>
-              Edit profile
-            </PathButton>
-            <PathButton onClick={onResume}>Résumé</PathButton>
-          </>
-        }
-      />
-      <div className="tp-compact-stats">
-        <span>{p.degree}</span>
-        <span>{p.standing}</span>
-        <span>Graduating {p.graduation}</span>
-        <span>{p.hours} hr / week</span>
-      </div>
-      <section className="tp-paper-card tp-profile-overview">
-        <div>
-          <h2>Goal</h2>
-          <p>{p.goal || "Exploring"}</p>
+    <div className="profile-reference-page">
+      <section className="profile-identity">
+        <div className="profile-guide">
+          <TrojanGuide outfit={p.avatar} />
         </div>
-        <div>
-          <h2>Interests</h2>
-          <p>{p.interests.join(" · ") || "Add your interests"}</p>
+        <div className="profile-identity-copy">
+          <h1>{p.name}</h1>
+          <p>
+            {p.major}
+            {p.minor ? ` · Minor in ${p.minor}` : ""}
+          </p>
+          <div className="profile-pills">
+            <span className="profile-level-pill">
+              Lv {level.level} · {level.name}
+            </span>
+            <span>
+              {p.degree}
+              {p.standing ? ` · ${p.standing}` : ""}
+            </span>
+            <span>Class of {p.graduation.slice(0, 4)}</span>
+          </div>
         </div>
-        <div>
-          <h2>Skills</h2>
-          <div className="flex flex-wrap gap-2">
-            {p.skills.map((skill) => (
-              <span className="tp-skill-tag" key={skill}>
-                {skill}
-              </span>
+        <div className="profile-identity-actions">
+          <PathButton variant="secondary" onClick={onEdit}>
+            <Pencil size={15} />
+            Edit profile
+          </PathButton>
+          <PathButton variant="secondary" onClick={onResume}>
+            <FileText size={16} />
+            Résumé
+          </PathButton>
+        </div>
+      </section>
+      <div className="profile-info-grid">
+        <section className="profile-info-card">
+          <h2>
+            <Sparkles size={19} />
+            Interests
+          </h2>
+          <div className="profile-pills interests">
+            {p.interests.map((interest) => (
+              <span key={interest}>{interest}</span>
             ))}
           </div>
-          {p.skillContext && (
-            <details className="tp-inline-details mt-3">
-              <summary>Skill experience</summary>
-              {Object.entries(p.skillContext)
-                .filter(([skill, answer]) => p.skills.includes(skill) && answer)
-                .map(([skill, answer]) => (
-                  <p key={skill}>
-                    <strong>{skill}:</strong> {answer}
-                  </p>
-                ))}
-            </details>
+          {!p.interests.length && (
+            <button className="tp-detail-button" onClick={onEdit}>
+              Add interests
+            </button>
           )}
-        </div>
-        {p.experiences && (
-          <div>
-            <h2>Background</h2>
-            <p className="whitespace-pre-wrap">{p.experiences}</p>
+        </section>
+        <section className="profile-info-card">
+          <h2>
+            <Wrench size={19} />
+            Skills
+          </h2>
+          <div className="profile-pills">
+            {p.skills.map((skill) => (
+              <span key={skill}>{skill}</span>
+            ))}
           </div>
-        )}
-        {p.resumePath && (
-          <button
-            className="tp-detail-button"
-            onClick={() => openFile(p.resumePath!)}
-          >
-            Open uploaded résumé ↗
-          </button>
-        )}
-      </section>
-      <div className="tp-section-title">
-        <h2>Projects</h2>
-        <PathButton variant="secondary" onClick={() => onProject()}>
-          + Add project
+          {!p.skills.length && (
+            <button className="tp-detail-button" onClick={onEdit}>
+              Add skills
+            </button>
+          )}
+          {p.skillContext &&
+            Object.entries(p.skillContext).some(
+              ([skill, answer]) => p.skills.includes(skill) && answer,
+            ) && (
+              <details className="profile-skill-details">
+                <summary>Experience with these skills</summary>
+                {Object.entries(p.skillContext)
+                  .filter(
+                    ([skill, answer]) => p.skills.includes(skill) && answer,
+                  )
+                  .map(([skill, answer]) => (
+                    <p key={skill}>
+                      <strong>{skill}:</strong> {answer}
+                    </p>
+                  ))}
+              </details>
+            )}
+        </section>
+        <section className="profile-info-card">
+          <h2>
+            <Target size={19} />
+            Goal
+          </h2>
+          <p className="profile-goal">{p.goal || "Exploring"}</p>
+          <small>{p.hours} hrs/week</small>
+        </section>
+      </div>
+      {(p.experiences || p.resumePath) && (
+        <details className="profile-background">
+          <summary>Background & uploaded résumé</summary>
+          {p.experiences && (
+            <p className="whitespace-pre-wrap">{p.experiences}</p>
+          )}
+          {p.resumePath && (
+            <button
+              className="tp-detail-button"
+              onClick={() => openFile(p.resumePath!)}
+            >
+              Open uploaded résumé ↗
+            </button>
+          )}
+        </details>
+      )}
+      <div className="profile-projects-heading">
+        <h2>
+          <Rocket size={22} />
+          Projects
+        </h2>
+        <PathButton onClick={() => onProject()}>
+          <Plus size={17} />
+          Add project
         </PathButton>
       </div>
-      {fileError && <p role="alert">{fileError}</p>}
-      <div className="tp-project-list">
+      {fileError && (
+        <p className="error" role="alert">
+          {fileError}
+        </p>
+      )}
+      <div className="profile-project-grid">
         {state.projects.map((project) => (
-          <article className="tp-paper-card" key={project.id}>
-            <div className="tp-section-title">
-              <h3>{project.title}</h3>
-              <span className="tp-task-meta">
-                {project.completed ? "Completed" : "In progress"}
+          <article className="profile-project-card" key={project.id}>
+            <div className="profile-project-meta">
+              <span
+                className={
+                  project.completed
+                    ? "profile-project-done"
+                    : "profile-project-pending"
+                }
+              >
+                {project.completed ? (
+                  <>
+                    <CheckCircle2 size={12} />
+                    Done
+                  </>
+                ) : (
+                  "In progress"
+                )}
               </span>
+              <time dateTime={project.date}>{project.date}</time>
             </div>
-            <p className="text-[14px] text-muted">{project.description}</p>
-            {project.skills.length > 0 && (
-              <p className="tp-task-meta">{project.skills.join(" · ")}</p>
-            )}
-            <div className="tp-project-links">
+            <h3>{project.title}</h3>
+            <p>{project.description}</p>
+            <div className="profile-pills">
+              {project.skills.filter(Boolean).map((skill) => (
+                <span key={skill}>{skill}</span>
+              ))}
+            </div>
+            <div className="profile-project-actions">
               {project.url && (
                 <a href={project.url} target="_blank" rel="noreferrer">
                   View project ↗
@@ -1816,20 +1887,26 @@ function ProfilePage({
               )}
               {project.attachment && (
                 <button onClick={() => openFile(project.attachment!)}>
-                  Open attachment ↗
+                  Attachment ↗
                 </button>
               )}
               <button onClick={() => onProject(project)}>Edit project</button>
               {project.completed && (
-                <button onClick={() => onPost(project)}>
-                  Draft LinkedIn post
-                </button>
+                <button onClick={() => onPost(project)}>LinkedIn draft</button>
               )}
             </div>
           </article>
         ))}
       </div>
-      {!state.projects.length && <p className="tp-empty">No projects yet.</p>}
+      {!state.projects.length && (
+        <div className="profile-no-projects">
+          <Rocket size={24} />
+          <p>No projects yet.</p>
+          <button className="tp-detail-button" onClick={() => onProject()}>
+            Add your first project
+          </button>
+        </div>
+      )}
     </div>
   );
 }

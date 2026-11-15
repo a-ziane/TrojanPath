@@ -1,3 +1,4 @@
+import { withDemoHackSC } from "./demoTasks.ts";
 import {
   planSpecSchema,
   taskXP,
@@ -355,7 +356,7 @@ export function makePlan(
   feedback?: Checkin,
   spec = fallbackSpec(p, state, feedback),
 ): Plan {
-  return {
+  const plan: Plan = {
     ...validatePlan(spec, p, state, feedback),
     id: crypto.randomUUID(),
     week,
@@ -369,6 +370,7 @@ export function makePlan(
       reflection: "",
     })),
   };
+  return withDemoHackSC(plan, state);
 }
 export function replaceTask(state: AppState, id: string): AppState {
   const plan = state.plans.find((p) => p.tasks.some((t) => t.id === id));

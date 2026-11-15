@@ -1,3 +1,4 @@
+import { BrandMark } from "../BrandMark";
 import { TrojanGuide } from "./TrojanGuide";
 import { Link } from "react-router-dom";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
@@ -191,14 +192,8 @@ export function Logo({
 }) {
   return (
     <Link to={href} className="flex items-center gap-[10px]">
-      <span
-        className={cx(
-          "flex size-9 items-center justify-center rounded-[10px] font-display text-[14px] font-bold",
-          light ? "bg-gold text-[#990000]" : "bg-cardinal text-gold",
-        )}
-      >
-        TP
-      </span>
+      <BrandMark />
+
       <span
         className={cx(
           "font-display text-[20px] font-bold",
